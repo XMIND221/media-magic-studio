@@ -8,6 +8,7 @@ import NotFound from "./pages/NotFound.tsx";
 import MarketplacePage from "./pages/MarketplacePage.tsx";
 import ProductDetailPage from "./pages/ProductDetailPage.tsx";
 import ExplorerPage from "./pages/ExplorerPage.tsx";
+import StudioCustomizePage from "./pages/StudioCustomizePage.tsx";
 
 const queryClient = new QueryClient();
 
