@@ -166,5 +166,182 @@
   .text-pretty { text-wrap: pretty; }
 }
 
+/* ===== Media Thumbnails — animated gradients & motion ===== */
+@layer utilities {
+  /* Gradient backdrops (rotating hue via --mt-hue) */
+  .mt-gradient-aurora {
+    background:
+      radial-gradient(120% 80% at 20% 0%, hsl(calc(var(--mt-hue,280) + 20) 80% 55% / 0.85), transparent 60%),
+      radial-gradient(100% 80% at 100% 100%, hsl(calc(var(--mt-hue,280) + 200) 80% 55% / 0.7), transparent 65%),
+      linear-gradient(160deg, #1a0b2e, #0a0612);
+    background-size: 200% 200%;
+    animation: mt-aurora 12s ease-in-out infinite;
+  }
+  .mt-gradient-cinema {
+    background:
+      radial-gradient(80% 60% at 30% 30%, hsl(43 80% 55% / 0.45), transparent 65%),
+      radial-gradient(80% 60% at 80% 80%, hsl(0 70% 45% / 0.35), transparent 65%),
+      linear-gradient(180deg, #1a1208, #07050a);
+  }
+  .mt-gradient-cinema-deep {
+    background:
+      radial-gradient(120% 80% at 50% 0%, hsl(var(--gold) / 0.25), transparent 60%),
+      linear-gradient(180deg, #0c0a08, #050405);
+  }
+  .mt-gradient-channel {
+    background:
+      linear-gradient(120deg, hsl(var(--ink)) 0%, hsl(30 14% 14%) 50%, hsl(var(--ink)) 100%),
+      radial-gradient(circle at 80% 50%, hsl(var(--gold) / 0.25), transparent 50%);
+    background-size: 200% 100%;
+    animation: mt-pan 14s linear infinite;
+  }
+  .mt-gradient-podcast {
+    background:
+      radial-gradient(circle at 50% 50%, hsl(280 60% 30% / 0.6), transparent 70%),
+      linear-gradient(180deg, #1a0f1f, #08050a);
+  }
+  .mt-gradient-promo {
+    background:
+      radial-gradient(circle at 30% 70%, hsl(0 80% 50% / 0.6), transparent 60%),
+      radial-gradient(circle at 80% 20%, hsl(35 95% 55% / 0.5), transparent 60%),
+      linear-gradient(135deg, #2a0808, #0e0405);
+  }
+  .mt-gradient-spot-dark {
+    background:
+      radial-gradient(60% 50% at 50% 0%, hsl(var(--gold) / 0.45), transparent 65%),
+      linear-gradient(180deg, #0e0c08, #050404);
+  }
+  .mt-gradient-music {
+    background:
+      conic-gradient(from 90deg at 50% 60%, hsl(var(--gold) / 0.5), transparent 40%, hsl(280 60% 40% / 0.5), transparent 80%),
+      linear-gradient(180deg, #14091f, #050208);
+  }
+  .mt-gradient-creator {
+    background:
+      radial-gradient(120% 80% at 0% 0%, hsl(43 70% 55% / 0.35), transparent 60%),
+      linear-gradient(135deg, #1a140b, #0a0805);
+  }
+  .mt-gradient-glass {
+    background:
+      radial-gradient(circle at 30% 30%, hsl(200 80% 55% / 0.55), transparent 60%),
+      radial-gradient(circle at 75% 75%, hsl(280 70% 55% / 0.45), transparent 60%),
+      linear-gradient(135deg, #0a0a14, #060508);
+  }
+
+  /* Decorative layers */
+  .mt-noise {
+    background-image: radial-gradient(circle at 1px 1px, hsl(0 0% 100% / 0.08) 1px, transparent 0);
+    background-size: 3px 3px;
+  }
+  .mt-scanlines {
+    background-image: repeating-linear-gradient(0deg, hsl(0 0% 0% / 0.4) 0px, hsl(0 0% 0% / 0.4) 1px, transparent 1px, transparent 3px);
+  }
+  .mt-grid-soft {
+    background-image:
+      linear-gradient(hsl(var(--gold) / 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--gold) / 0.08) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  .mt-vinyl {
+    background:
+      repeating-radial-gradient(circle at 50% 60%, hsl(0 0% 0% / 0.25) 0px, hsl(0 0% 0% / 0.25) 2px, transparent 2px, transparent 6px);
+    animation: mt-spin 20s linear infinite;
+  }
+  .mt-spotlight {
+    background: radial-gradient(60% 100% at 50% 0%, hsl(var(--gold) / 0.55), transparent 65%);
+    animation: mt-sweep 6s ease-in-out infinite;
+  }
+  .mt-light-leak {
+    background:
+      radial-gradient(40% 60% at 90% 10%, hsl(35 95% 60% / 0.35), transparent 60%),
+      radial-gradient(40% 60% at 10% 90%, hsl(0 70% 50% / 0.25), transparent 60%);
+    animation: mt-leak 8s ease-in-out infinite alternate;
+  }
+  .mt-orbs {
+    background:
+      radial-gradient(circle at 25% 30%, hsl(0 0% 100% / 0.25), transparent 8%),
+      radial-gradient(circle at 75% 70%, hsl(0 0% 100% / 0.18), transparent 10%);
+    animation: mt-float 9s ease-in-out infinite alternate;
+  }
+  .mt-gold-shimmer {
+    background:
+      linear-gradient(115deg, transparent 30%, hsl(var(--gold) / 0.35) 50%, transparent 70%);
+    background-size: 200% 200%;
+    animation: mt-shimmer 5s ease-in-out infinite;
+  }
+  .mt-shimmer {
+    background: linear-gradient(115deg, transparent 40%, hsl(0 0% 100% / 0.07) 50%, transparent 60%);
+    background-size: 200% 200%;
+    animation: mt-shimmer 6s ease-in-out infinite;
+  }
+
+  /* Tile placeholder */
+  .mt-tile {
+    background: linear-gradient(135deg, hsl(var(--surface-3)), hsl(var(--ink)));
+    background-size: 200% 200%;
+    animation: mt-pan 8s linear infinite;
+  }
+  .mt-progress { animation: mt-progress 2.4s ease-in-out infinite; }
+  .mt-progress-bar {
+    background: linear-gradient(90deg, transparent, hsl(var(--gold)), transparent);
+    background-size: 50% 100%;
+    background-repeat: no-repeat;
+    animation: mt-progress-bar 2.5s linear infinite;
+  }
+  .mt-rise { animation: mt-rise 0.9s var(--transition-luxe) both; }
+  .mt-pulse { animation: mt-pulse 2.4s ease-in-out infinite; }
+  .mt-blink { animation: mt-blink 1.4s ease-in-out infinite; }
+  .mt-ring {
+    border-radius: 9999px;
+    border: 1px solid hsl(var(--gold) / 0.4);
+    animation: mt-ring 3s ease-out infinite;
+  }
+  .mt-eq {
+    height: 30%;
+    animation: mt-eq 1.1s ease-in-out infinite;
+  }
+  .mt-marquee {
+    display: inline-block;
+    animation: mt-marquee 15s linear infinite;
+  }
+
+  /* Neon */
+  .mt-neon-bg {
+    background:
+      radial-gradient(circle at 30% 30%, hsl(310 100% 60% / 0.35), transparent 60%),
+      radial-gradient(circle at 70% 70%, hsl(190 100% 55% / 0.35), transparent 60%);
+    animation: mt-neon 4s ease-in-out infinite alternate;
+  }
+  .mt-neon-text {
+    color: hsl(310 100% 80%);
+    text-shadow: 0 0 6px hsl(310 100% 65%), 0 0 16px hsl(310 100% 55% / 0.7), 0 0 32px hsl(310 100% 55% / 0.5);
+  }
+  .mt-neon-line {
+    background: hsl(190 100% 60%);
+    box-shadow: 0 0 8px hsl(190 100% 60%), 0 0 16px hsl(190 100% 60% / 0.7);
+  }
+}
+
+/* Keyframes */
+@keyframes mt-aurora { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+@keyframes mt-pan    { 0%{background-position:0% 0%} 100%{background-position:200% 0%} }
+@keyframes mt-spin   { to { transform: rotate(360deg); } }
+@keyframes mt-shimmer{ 0%,100%{background-position:0% 0%} 50%{background-position:100% 100%} }
+@keyframes mt-sweep  { 0%,100%{opacity:.6;transform:translateX(0)} 50%{opacity:1;transform:translateX(8%)} }
+@keyframes mt-leak   { from{opacity:.6} to{opacity:1} }
+@keyframes mt-float  { from{transform:translateY(0)} to{transform:translateY(-6px)} }
+@keyframes mt-progress { 0%{width:10%} 100%{width:95%} }
+@keyframes mt-progress-bar { 0%{background-position:-50% 0} 100%{background-position:150% 0} }
+@keyframes mt-rise   { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+@keyframes mt-pulse  { 0%,100%{transform:scale(1);opacity:.85} 50%{transform:scale(1.06);opacity:1} }
+@keyframes mt-blink  { 0%,100%{opacity:.3} 50%{opacity:1} }
+@keyframes mt-ring   { 0%{transform:scale(.5);opacity:.9} 100%{transform:scale(1.6);opacity:0} }
+@keyframes mt-eq     { 0%,100%{height:20%} 50%{height:90%} }
+@keyframes mt-marquee{ 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+@keyframes mt-neon   { from{opacity:.7} to{opacity:1} }
+
+@keyframes fade-up   { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+.animate-fade-up { animation: fade-up 0.5s var(--transition-luxe) both; }
+
 /* Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
