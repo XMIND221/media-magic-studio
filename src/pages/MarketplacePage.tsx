@@ -13,6 +13,7 @@ const PAGE_SIZE = 24;
 export default function MarketplacePage() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<CategoryFilter>("all");
+  const [mediaSub, setMediaSub] = useState<MediaSubcategory>("all");
   const [filters, setFilters] = useState<FilterState>({ premiumOnly: false, storyOnly: false, format: "all" });
   const [visible, setVisible] = useState(PAGE_SIZE);
 
@@ -22,12 +23,18 @@ export default function MarketplacePage() {
   // Reset pagination when filters change
   useEffect(() => {
     setVisible(PAGE_SIZE);
-  }, [query, category, filters]);
+  }, [query, category, mediaSub, filters]);
+
+  // Reset media subcategory when leaving the media tab
+  useEffect(() => {
+    if (category !== "media") setMediaSub("all");
+  }, [category]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return EVENA_MARKETPLACE_CATALOG.filter((p) => {
       if (category !== "all" && p.category !== category) return false;
+      if (category === "media" && mediaSub !== "all" && p.subcategory !== mediaSub) return false;
       if (filters.premiumOnly && !p.premium) return false;
       if (filters.storyOnly && !p.storyCompatible) return false;
       if (filters.format !== "all" && !p.supportedFormats.includes(filters.format)) return false;
@@ -37,7 +44,27 @@ export default function MarketplacePage() {
       }
       return true;
     });
-  }, [query, category, filters]);
+  }, [query, category, mediaSub, filters]);
+
+  // Counts per media subcategory (when media tab is active)
+  const mediaCounts = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const base = EVENA_MARKETPLACE_CATALOG.filter((p) => {
+      if (p.category !== "media") return false;
+      if (filters.premiumOnly && !p.premium) return false;
+      if (filters.storyOnly && !p.storyCompatible) return false;
+      if (filters.format !== "all" && !p.supportedFormats.includes(filters.format)) return false;
+      if (q) {
+        const hay = `${p.title} ${p.subcategory} ${p.tags.join(" ")}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+    const out: Record<string, number> = { all: base.length };
+    for (const p of base) out[p.subcategory] = (out[p.subcategory] ?? 0) + 1;
+    return out;
+  }, [query, filters]);
+
 
   // Counts per category (respecting filters/search but not category itself)
   const counts = useMemo(() => {
