@@ -3,6 +3,7 @@ import { EVENA_MARKETPLACE_CATALOG, type MarketplaceProduct } from "@/data/evena
 import { MarketplaceHeader } from "@/components/marketplace/MarketplaceHeader";
 import { CategoryTabs, type CategoryFilter } from "@/components/marketplace/CategoryTabs";
 import { FiltersBar, type FilterState } from "@/components/marketplace/FiltersBar";
+import { MediaSubcategoryBar, type MediaSubcategory } from "@/components/marketplace/MediaSubcategoryBar";
 import { ProductCard } from "@/components/marketplace/ProductCard";
 import { ProductRow } from "@/components/marketplace/ProductRow";
 import { useFavorites, useRecents } from "@/hooks/use-marketplace-storage";
