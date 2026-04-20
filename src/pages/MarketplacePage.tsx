@@ -157,7 +157,7 @@ export default function MarketplacePage() {
         <div className="container mx-auto px-4 py-8 text-center">
           <p className="font-display text-lg text-gold">EVENA</p>
           <p className="mt-1 text-[11px] tracking-[0.3em] text-muted-foreground">
-            150 FAMILLES · 1500+ MODÈLES · SÉNÉGAL &amp; AFRIQUE
+            192 FAMILLES · 2000+ MODÈLES · MEDIA · ÉVÉNEMENTIEL · BUSINESS
           </p>
         </div>
       </footer>
