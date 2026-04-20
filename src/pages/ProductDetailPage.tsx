@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Heart, Sparkles, Smartphone } from "lucide-react";
 import { EVENA_MARKETPLACE_CATALOG } from "@/data/evenaMarketplaceCatalog";
 import { ProductThumbnail } from "@/components/marketplace/ProductThumbnail";
+import { MediaThumbnail } from "@/components/marketplace/MediaThumbnail";
 import { ProductCard } from "@/components/marketplace/ProductCard";
 import { useFavorites, useRecents } from "@/hooks/use-marketplace-storage";
 import { cn } from "@/lib/utils";
