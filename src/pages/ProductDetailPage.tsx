@@ -63,7 +63,11 @@ export default function ProductDetailPage() {
         {/* hero preview */}
         <div className="lg:sticky lg:top-6 lg:self-start">
           <div className="relative mx-auto max-w-md overflow-hidden rounded-3xl border border-border/60 shadow-luxe">
-            <ProductThumbnail product={product} />
+            {product.category === "media" ? (
+              <MediaThumbnail product={product} />
+            ) : (
+              <ProductThumbnail product={product} />
+            )}
           </div>
           <p className="mt-3 text-center text-[11px] tracking-[0.3em] text-muted-foreground">
             APERÇU PRINCIPAL · 10 VARIANTES STYLES À VENIR
