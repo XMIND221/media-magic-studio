@@ -120,13 +120,12 @@ export default function ProductDetailPage() {
 
           {/* CTAs */}
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <a
-              href="#"
-              onClick={(e) => e.preventDefault()}
+            <Link
+              to={`/studio/${product.id}`}
               className="inline-flex items-center justify-center rounded-full bg-gradient-gold px-6 py-3 text-sm font-semibold tracking-wide text-ink shadow-glow transition-luxe hover:scale-[1.02]"
             >
               Personnaliser →
-            </a>
+            </Link>
             <a
               href="#"
               onClick={(e) => e.preventDefault()}
