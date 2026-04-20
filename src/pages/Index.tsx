@@ -54,17 +54,17 @@ export default function Index() {
             </div>
             <div className="mt-8 flex items-center gap-6 text-[11px] tracking-[0.3em] text-muted-foreground">
               <div>
-                <div className="font-display text-xl text-gold">150</div>
+                <div className="font-display text-xl text-gold">192</div>
                 <div>FAMILLES</div>
               </div>
               <div className="h-8 w-px bg-border" />
               <div>
-                <div className="font-display text-xl text-gold">1500+</div>
+                <div className="font-display text-xl text-gold">2000+</div>
                 <div>MODÈLES</div>
               </div>
               <div className="h-8 w-px bg-border" />
               <div>
-                <div className="font-display text-xl text-gold">11</div>
+                <div className="font-display text-xl text-gold">12</div>
                 <div>CATÉGORIES</div>
               </div>
             </div>
