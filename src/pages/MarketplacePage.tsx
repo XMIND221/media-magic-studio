@@ -120,6 +120,9 @@ export default function MarketplacePage() {
       <MarketplaceHeader query={query} onQuery={setQuery} />
 
       <CategoryTabs active={category} onChange={setCategory} counts={counts} />
+      {category === "media" && (
+        <MediaSubcategoryBar value={mediaSub} onChange={setMediaSub} counts={mediaCounts} />
+      )}
       <FiltersBar value={filters} onChange={setFilters} />
 
       {showRows && (
