@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Heart, Sparkles, Smartphone } from "lucide-react";
 import type { MarketplaceProduct } from "@/data/evenaMarketplaceCatalog";
 import { ProductThumbnail } from "./ProductThumbnail";
+import { MediaThumbnail } from "./MediaThumbnail";
 import { useFavorites } from "@/hooks/use-marketplace-storage";
 import { cn } from "@/lib/utils";
 
