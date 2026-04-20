@@ -164,6 +164,38 @@
   .transition-luxe { transition: all 0.5s var(--transition-luxe); }
   .text-balance { text-wrap: balance; }
   .text-pretty { text-wrap: pretty; }
+  .mt-vignette {
+    background: radial-gradient(120% 90% at 50% 50%, transparent 50%, hsl(0 0% 0% / 0.6) 100%);
+  }
+
+  /* Range slider — luxe gold */
+  .evena-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    border-radius: 9999px;
+    background: hsl(var(--border));
+    outline: none;
+  }
+  .evena-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 9999px;
+    background: hsl(var(--gold));
+    border: 2px solid hsl(var(--background));
+    box-shadow: 0 0 0 1px hsl(var(--gold) / 0.4);
+    cursor: pointer;
+    transition: transform .15s var(--transition-luxe);
+  }
+  .evena-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
+  .evena-slider::-moz-range-thumb {
+    width: 14px; height: 14px;
+    border-radius: 9999px;
+    background: hsl(var(--gold));
+    border: 2px solid hsl(var(--background));
+    cursor: pointer;
+  }
 }
 
 /* ===== Media Thumbnails — animated gradients & motion ===== */
