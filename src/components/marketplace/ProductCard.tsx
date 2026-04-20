@@ -53,7 +53,11 @@ export function ProductCard({ product }: Props) {
           <Heart className={cn("h-3.5 w-3.5", fav && "fill-gold text-gold")} />
         </button>
 
-        <ProductThumbnail product={product} />
+        {product.category === "media" ? (
+          <MediaThumbnail product={product} />
+        ) : (
+          <ProductThumbnail product={product} />
+        )}
       </div>
 
       {/* meta */}
