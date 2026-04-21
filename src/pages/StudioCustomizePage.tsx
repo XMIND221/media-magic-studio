@@ -379,18 +379,21 @@ export default function StudioCustomizePage() {
                     : "transparent",
                 }}
               >
-                {/* Template visual */}
+                {/* Template visual — variant-driven transforms (scale/rotate/translate/flip + blend) */}
                 <div
                   className="absolute inset-0"
                   style={{
                     filter: filterCss,
                     opacity: state.paletteOpacity / 100,
+                    transform: `${profile.flip ? "scaleX(-1) " : ""}translate(${profile.translateX}%, ${profile.translateY}%) scale(${profile.scale}) rotate(${profile.rotate}deg)`,
+                    transformOrigin: "center",
+                    mixBlendMode: profile.blendOverlay,
                   }}
                 >
                   {state.showBackground && (
                     isMedia
-                      ? <MediaThumbnail product={{ ...product, title: state.title }} variantSeed={`${state.variantSeed}-${state.variantSeed.repeat(3)}-${state.palette}-${state.accent}-${state.font}`} />
-                      : <ProductThumbnail product={{ ...product, title: state.title }} variantSeed={`${state.variantSeed}-${state.variantSeed.repeat(3)}-${state.palette}-${state.accent}-${state.font}`} />
+                      ? <MediaThumbnail product={{ ...product, title: state.title }} variantSeed={thumbSeed} />
+                      : <ProductThumbnail product={{ ...product, title: state.title }} variantSeed={thumbSeed} />
                   )}
                 </div>
 
