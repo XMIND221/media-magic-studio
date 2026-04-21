@@ -84,7 +84,19 @@ interface State {
   shadow: boolean;
   rounded: number;       // 0-32
   paletteOpacity: number;// 0-100
-}
+  // User image (background photo)
+  userImage: string | null;     // dataURL
+  imageMode: "cover" | "contain" | "fill";
+  imageScale: number;           // 50-300 (%)
+  imageX: number;               // -100..100 (%)
+  imageY: number;               // -100..100 (%)
+  imageOpacity: number;         // 0-100
+  imageBlend: "normal" | "multiply" | "screen" | "overlay" | "soft-light" | "luminosity";
+  // User logo (small overlay image)
+  userLogo: string | null;
+  logoSize: number;             // 24-160 (px)
+  logoOpacity: number;          // 0-100
+  logoCorner: "tl" | "tr" | "bl" | "br";
 
 type Action =
   | { type: "set"; patch: Partial<State> }
