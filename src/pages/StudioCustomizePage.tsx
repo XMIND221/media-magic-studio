@@ -472,17 +472,22 @@ export default function StudioCustomizePage() {
                   />
                 )}
 
-                {/* Custom text layer (overlays the template) */}
+                {/* Custom text layer (variant overrides align/justify/padding/title size) */}
                 <div
-                  className="pointer-events-none absolute inset-0 flex flex-col justify-end p-5"
-                  style={{ textAlign: state.titleAlign }}
+                  className={cn(
+                    "pointer-events-none absolute inset-0 flex flex-col",
+                    effJustify === "start"  && "justify-start",
+                    effJustify === "center" && "justify-center",
+                    effJustify === "end"    && "justify-end",
+                  )}
+                  style={{ textAlign: effAlign, padding: effPadding }}
                 >
                   {state.showLogo && (
                     <div
                       className={cn(
                         "mb-auto inline-flex w-fit items-center gap-1.5 rounded-md px-2 py-1 text-[10px] font-semibold tracking-[0.3em]",
-                        state.titleAlign === "center" && "mx-auto",
-                        state.titleAlign === "right" && "ml-auto",
+                        effAlign === "center" && "mx-auto",
+                        effAlign === "right" && "ml-auto",
                       )}
                       style={{ background: "hsl(0 0% 0% / 0.35)", color: activeAccent.color, backdropFilter: "blur(8px)" }}
                     >
@@ -497,8 +502,8 @@ export default function StudioCustomizePage() {
                     <span
                       className={cn(
                         "mb-2 inline-block w-fit rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest",
-                        state.titleAlign === "center" && "mx-auto",
-                        state.titleAlign === "right" && "ml-auto",
+                        effAlign === "center" && "mx-auto",
+                        effAlign === "right" && "ml-auto",
                       )}
                       style={{ background: activeAccent.color, color: "hsl(var(--ink))" }}
                     >
@@ -510,10 +515,10 @@ export default function StudioCustomizePage() {
                       className="leading-tight text-white drop-shadow-md"
                       style={{
                         fontFamily: activeFont.display,
-                        fontSize: state.titleSize,
+                        fontSize: effTitleSize,
                         fontWeight: state.titleWeight,
                         fontStyle: state.titleItalic ? "italic" : "normal",
-                        textTransform: state.titleUppercase ? "uppercase" : "none",
+                        textTransform: effUppercase ? "uppercase" : "none",
                       }}
                     >
                       {state.title || " "}
