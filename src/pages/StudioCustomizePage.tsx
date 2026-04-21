@@ -362,9 +362,7 @@ export default function StudioCustomizePage() {
   // Variant seed for thumbnail engines: ONLY variant — never font/accent (font shouldn't change colors)
   const thumbSeed = `${state.variantSeed}-${state.variantSeed.repeat(3)}-${state.palette}`;
 
-  // Refs for PNG export
-  const previewRef = useRef<HTMLDivElement>(null);
-  const [exporting, setExporting] = useState(false);
+  // PNG export handler (uses previewRef declared above)
   const handleExport = async () => {
     if (!previewRef.current) return;
     setExporting(true);
@@ -386,9 +384,6 @@ export default function StudioCustomizePage() {
     }
   };
 
-  // Favorites for compare grid
-  const photoFavs = useBlendFavorites("photo");
-  const logoFavs = useBlendFavorites("logo");
 
   // Auto-look : analyse simple de la luminance moyenne d'une image dataURL
   const autoPickBlend = async (src: string | null, kind: "photo" | "logo"): Promise<string | null> => {
