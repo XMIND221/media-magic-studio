@@ -211,13 +211,15 @@ interface State {
   imageScale: number;           // 50-300 (%)
   imageX: number;               // -100..100 (%)
   imageY: number;               // -100..100 (%)
+  imageRotate: number;          // -180..180 (deg)
   imageOpacity: number;         // 0-100
-  imageBlend: "normal" | "multiply" | "screen" | "overlay" | "soft-light" | "luminosity";
+  imageBlend: "normal" | "multiply" | "screen" | "overlay" | "soft-light" | "luminosity" | "color" | "darken" | "lighten" | "difference";
   // User logo (small overlay image)
   userLogo: string | null;
   logoSize: number;             // 24-160 (px)
   logoOpacity: number;          // 0-100
   logoCorner: "tl" | "tr" | "bl" | "br";
+  logoBlend: "normal" | "multiply" | "screen" | "overlay" | "soft-light" | "luminosity" | "color-dodge" | "difference";
 }
 
 type Action =
@@ -268,12 +270,14 @@ export default function StudioCustomizePage() {
     imageScale: 100,
     imageX: 0,
     imageY: 0,
+    imageRotate: 0,
     imageOpacity: 100,
     imageBlend: "normal",
     userLogo: null,
     logoSize: 56,
     logoOpacity: 100,
     logoCorner: "tl",
+    logoBlend: "normal",
   }), [product]);
 
   const [state, dispatch] = useReducer(reducer, initial);
@@ -397,27 +401,22 @@ export default function StudioCustomizePage() {
                   )}
                 </div>
 
-                {/* User-uploaded background image — sits above template, below overlays + text */}
+                {/* User-uploaded background image — drag to move, sits above template, below overlays + text */}
                 {state.userImage && (
-                  <div
-                    className="pointer-events-none absolute inset-0 z-10 overflow-hidden"
-                    style={{ opacity: state.imageOpacity / 100, mixBlendMode: state.imageBlend }}
-                  >
-                    <img
-                      src={state.userImage}
-                      alt="Visuel utilisateur"
-                      className="absolute left-1/2 top-1/2 h-full w-full max-w-none -translate-x-1/2 -translate-y-1/2 select-none"
-                      style={{
-                        objectFit: state.imageMode,
-                        transform: `translate(calc(-50% + ${state.imageX}%), calc(-50% + ${state.imageY}%)) scale(${state.imageScale / 100})`,
-                        transformOrigin: "center",
-                      }}
-                      draggable={false}
-                    />
-                  </div>
+                  <DraggableImageLayer
+                    src={state.userImage}
+                    mode={state.imageMode}
+                    scale={state.imageScale}
+                    x={state.imageX}
+                    y={state.imageY}
+                    rotate={state.imageRotate}
+                    opacity={state.imageOpacity}
+                    blend={state.imageBlend}
+                    onMove={(x, y) => set({ imageX: x, imageY: y })}
+                  />
                 )}
 
-                {/* User logo overlay — preserves aspect ratio (height auto) */}
+                {/* User logo overlay — supports blend modes + preserves aspect ratio */}
                 {state.userLogo && (
                   <img
                     src={state.userLogo}
@@ -434,6 +433,7 @@ export default function StudioCustomizePage() {
                       height: "auto",
                       maxHeight: state.logoSize,
                       opacity: state.logoOpacity / 100,
+                      mixBlendMode: state.logoBlend,
                     }}
                     draggable={false}
                   />
@@ -823,24 +823,27 @@ export default function StudioCustomizePage() {
                         </button>
                       ))}
                     </div>
+                    <p className="rounded-md border border-gold/20 bg-gold/5 px-2 py-1.5 text-[10px] text-gold/80">
+                      💡 Astuce : glissez directement la photo dans l'aperçu pour la déplacer.
+                    </p>
                     <Slider label="Zoom" value={state.imageScale} min={50} max={300} onChange={(v) => set({ imageScale: v })} unit="%" />
+                    <Slider label="Rotation" value={state.imageRotate} min={-180} max={180} onChange={(v) => set({ imageRotate: v })} unit="°" />
                     <Slider label="Position X" value={state.imageX} min={-100} max={100} onChange={(v) => set({ imageX: v })} unit="%" />
                     <Slider label="Position Y" value={state.imageY} min={-100} max={100} onChange={(v) => set({ imageY: v })} unit="%" />
                     <Slider label="Opacité" value={state.imageOpacity} min={0} max={100} onChange={(v) => set({ imageOpacity: v })} unit="%" />
-                    <Field label="Fusion">
-                      <select
+
+                    <Field label="Mode de fusion">
+                      <BlendPresetGrid
+                        src={state.userImage}
                         value={state.imageBlend}
-                        onChange={(e) => set({ imageBlend: e.target.value as State["imageBlend"] })}
-                        className="w-full rounded-lg border border-border bg-card px-2 py-2 text-xs text-foreground outline-none focus:border-gold/50"
-                      >
-                        {(["normal","multiply","screen","overlay","soft-light","luminosity"] as const).map((b) => (
-                          <option key={b} value={b}>{b}</option>
-                        ))}
-                      </select>
+                        options={["normal","multiply","screen","overlay","soft-light","luminosity","color","darken","lighten","difference"]}
+                        onChange={(b) => set({ imageBlend: b as State["imageBlend"] })}
+                      />
                     </Field>
+
                     <button
                       type="button"
-                      onClick={() => set({ userImage: null, imageScale: 100, imageX: 0, imageY: 0, imageOpacity: 100, imageBlend: "normal" })}
+                      onClick={() => set({ userImage: null, imageScale: 100, imageX: 0, imageY: 0, imageRotate: 0, imageOpacity: 100, imageBlend: "normal" })}
                       className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-1.5 text-[11px] text-destructive transition-luxe hover:bg-destructive/10"
                     >
                       <Trash2 className="h-3 w-3" /> Retirer la photo
@@ -884,6 +887,22 @@ export default function StudioCustomizePage() {
                         ))}
                       </div>
                     </Field>
+                    <Field label="Mode de fusion logo">
+                      <BlendPresetGrid
+                        src={state.userLogo}
+                        value={state.logoBlend}
+                        options={["normal","multiply","screen","overlay","soft-light","luminosity","color-dodge","difference"]}
+                        onChange={(b) => set({ logoBlend: b as State["logoBlend"] })}
+                        compact
+                      />
+                    </Field>
+                    <div className="rounded-lg border border-border/60 bg-card/40 p-2">
+                      <p className="mb-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">Avant / Après</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <BeforeAfterTile src={state.userLogo} blend="normal" label="Avant" />
+                        <BeforeAfterTile src={state.userLogo} blend={state.logoBlend} label="Après" />
+                      </div>
+                    </div>
                     <button
                       type="button"
                       onClick={() => set({ userLogo: null })}
@@ -1145,6 +1164,133 @@ function ImageUploader({
           <span className="text-[10px] opacity-70">Glissez-déposez ou cliquez · max 8 Mo</span>
         </button>
       )}
+    </div>
+  );
+}
+
+/* ----------- Live drag/crop image layer ----------- */
+
+function DraggableImageLayer({
+  src, mode, scale, x, y, rotate, opacity, blend, onMove,
+}: {
+  src: string;
+  mode: "cover" | "contain" | "fill";
+  scale: number;
+  x: number;
+  y: number;
+  rotate: number;
+  opacity: number;
+  blend: State["imageBlend"];
+  onMove: (x: number, y: number) => void;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dragging, setDragging] = useState(false);
+  const startRef = useRef<{ px: number; py: number; x: number; y: number } | null>(null);
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    setDragging(true);
+    startRef.current = { px: e.clientX, py: e.clientY, x, y };
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!dragging || !startRef.current || !containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const dxPct = ((e.clientX - startRef.current.px) / rect.width) * 100;
+    const dyPct = ((e.clientY - startRef.current.py) / rect.height) * 100;
+    const nx = Math.max(-100, Math.min(100, Math.round(startRef.current.x + dxPct)));
+    const ny = Math.max(-100, Math.min(100, Math.round(startRef.current.y + dyPct)));
+    onMove(nx, ny);
+  };
+  const onPointerUp = () => { setDragging(false); startRef.current = null; };
+
+  return (
+    <div
+      ref={containerRef}
+      className={cn("absolute inset-0 z-10 overflow-hidden touch-none", dragging ? "cursor-grabbing" : "cursor-grab")}
+      style={{ opacity: opacity / 100, mixBlendMode: blend }}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+    >
+      <img
+        src={src}
+        alt="Visuel utilisateur"
+        className="absolute left-1/2 top-1/2 h-full w-full max-w-none select-none"
+        style={{
+          objectFit: mode,
+          transform: `translate(calc(-50% + ${x}%), calc(-50% + ${y}%)) scale(${scale / 100}) rotate(${rotate}deg)`,
+          transformOrigin: "center",
+        }}
+        draggable={false}
+      />
+      {dragging && <div className="pointer-events-none absolute inset-0 ring-2 ring-gold/60" />}
+      <div className="pointer-events-none absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-[9px] font-medium uppercase tracking-widest text-white/90 backdrop-blur">
+        <Move className="h-2.5 w-2.5" /> Glisser
+      </div>
+    </div>
+  );
+}
+
+/* ----------- Blend mode preset grid ----------- */
+
+function BlendPresetGrid({
+  src, value, options, onChange, compact,
+}: {
+  src: string | null;
+  value: string;
+  options: string[];
+  onChange: (v: string) => void;
+  compact?: boolean;
+}) {
+  return (
+    <div className={cn("grid gap-1.5", compact ? "grid-cols-4" : "grid-cols-5")}>
+      {options.map((b) => {
+        const active = value === b;
+        return (
+          <button
+            key={b}
+            type="button"
+            onClick={() => onChange(b)}
+            title={b}
+            className={cn(
+              "group flex flex-col items-stretch overflow-hidden rounded-md border text-[9px] transition-luxe",
+              active ? "border-gold ring-1 ring-gold/40" : "border-border hover:border-gold/40"
+            )}
+          >
+            <div className="relative h-9 w-full bg-gradient-to-br from-[hsl(var(--gold))] to-[hsl(var(--surface-3))]">
+              {src && (
+                <img
+                  src={src}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover"
+                  style={{ mixBlendMode: b as React.CSSProperties["mixBlendMode"] }}
+                />
+              )}
+            </div>
+            <span className="truncate bg-card px-1 py-0.5 text-center text-foreground/80">{b}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function BeforeAfterTile({ src, blend, label }: { src: string | null; blend: string; label: string }) {
+  return (
+    <div className="overflow-hidden rounded-md border border-border/60">
+      <div className="relative aspect-square bg-gradient-to-br from-[hsl(var(--gold))] via-[hsl(var(--surface-2))] to-[hsl(var(--ink))]">
+        {src && (
+          <img
+            src={src}
+            alt={label}
+            className="absolute inset-0 h-full w-full object-contain p-2"
+            style={{ mixBlendMode: blend as React.CSSProperties["mixBlendMode"] }}
+          />
+        )}
+      </div>
+      <p className="bg-card px-1.5 py-0.5 text-center text-[9px] uppercase tracking-widest text-muted-foreground">{label}</p>
     </div>
   );
 }
