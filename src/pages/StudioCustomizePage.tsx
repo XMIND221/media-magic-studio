@@ -666,22 +666,30 @@ export default function StudioCustomizePage() {
               </Section>
 
               <Section icon={<Sparkles className="h-3.5 w-3.5" />} label="Variantes">
-                <div className="flex flex-wrap gap-2">
-                  {VARIANTS.map((v) => (
-                    <button
-                      key={v}
-                      type="button"
-                      onClick={() => set({ variantSeed: v })}
-                      className={cn(
-                        "rounded-full border px-3 py-1 text-[11px] uppercase tracking-widest transition-luxe",
-                        state.variantSeed === v
-                          ? "border-gold bg-gradient-gold text-[hsl(var(--ink))]"
-                          : "border-border bg-card text-foreground/80 hover:border-gold/40"
-                      )}
-                    >
-                      {v}
-                    </button>
-                  ))}
+                <p className="mb-2 text-[10px] text-muted-foreground">
+                  Chaque variante change layout, contraste, échelle et overlay — pas seulement la couleur.
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {VARIANTS.map((v) => {
+                    const p = VARIANT_PROFILES[v];
+                    const active = state.variantSeed === v;
+                    return (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => set({ variantSeed: v })}
+                        className={cn(
+                          "flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left transition-luxe",
+                          active
+                            ? "border-gold bg-gold/10 text-gold"
+                            : "border-border bg-card text-foreground/80 hover:border-gold/40"
+                        )}
+                      >
+                        <span className="text-[11px] font-semibold uppercase tracking-widest">{v}</span>
+                        <span className="text-[10px] text-foreground/60">{p.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </Section>
             </>
