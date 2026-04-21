@@ -385,11 +385,34 @@ export default function StudioCustomizePage() {
                   <div
                     className={cn(
                       "pointer-events-none absolute inset-0",
-                      state.overlay === "grain" && "mt-noise opacity-30",
-                      state.overlay === "scan" && "mt-scanlines opacity-25",
-                      state.overlay === "leak" && "mt-light-leak",
-                      state.overlay === "vignette" && "mt-vignette",
+                      state.overlay === "grain"     && "mt-noise opacity-40",
+                      state.overlay === "scan"      && "mt-scanlines opacity-30",
+                      state.overlay === "leak"      && "mt-light-leak",
+                      state.overlay === "vignette"  && "mt-vignette",
+                      state.overlay === "grid"      && "mt-grid-soft opacity-60",
+                      state.overlay === "shimmer"   && "mt-gold-shimmer",
+                      state.overlay === "vinyl"     && "mt-vinyl opacity-40",
+                      state.overlay === "spotlight" && "mt-spotlight",
+                      state.overlay === "orbs"      && "mt-orbs",
+                      state.overlay === "neon"      && "mt-neon-bg",
                     )}
+                    style={
+                      state.overlay === "halftone"
+                        ? { backgroundImage: "radial-gradient(hsl(0 0% 0% / .55) 1.2px, transparent 1.4px)", backgroundSize: "5px 5px" }
+                        : state.overlay === "stripes"
+                        ? { backgroundImage: "repeating-linear-gradient(90deg, hsl(0 0% 0% / .35) 0 6px, transparent 6px 12px)" }
+                        : state.overlay === "diagonal"
+                        ? { backgroundImage: "repeating-linear-gradient(45deg, hsl(43 70% 55% / .12) 0 8px, transparent 8px 18px)" }
+                        : state.overlay === "crt"
+                        ? { backgroundImage: "repeating-linear-gradient(0deg, hsl(0 0% 0% / .25) 0 2px, transparent 2px 4px), radial-gradient(120% 80% at 50% 50%, transparent 60%, hsl(0 0% 0% / .55))" }
+                        : state.overlay === "dust"
+                        ? { backgroundImage: "radial-gradient(circle at 20% 30%, hsl(0 0% 100% / .15) 1px, transparent 2px), radial-gradient(circle at 70% 80%, hsl(0 0% 100% / .12) 1px, transparent 2px), radial-gradient(circle at 40% 70%, hsl(0 0% 100% / .10) 1px, transparent 2px)", backgroundSize: "120px 120px, 90px 90px, 150px 150px" }
+                        : state.overlay === "bokeh"
+                        ? { backgroundImage: "radial-gradient(circle at 20% 30%, hsl(43 80% 60% / .35) 0, transparent 14px), radial-gradient(circle at 70% 60%, hsl(310 70% 60% / .3) 0, transparent 18px), radial-gradient(circle at 50% 80%, hsl(190 80% 60% / .3) 0, transparent 22px)" }
+                        : state.overlay === "duotone"
+                        ? { background: "linear-gradient(135deg, hsl(43 80% 55% / .35), hsl(280 70% 50% / .35))", mixBlendMode: "color" }
+                        : undefined
+                    }
                   />
                 )}
 
