@@ -538,7 +538,15 @@ export default function StudioCustomizePage() {
                         state.palette === p.id ? "border-gold ring-1 ring-gold/40" : "border-border hover:border-gold/40"
                       )}
                     >
-                      <div className="h-10 w-full" style={{ background: `linear-gradient(135deg, ${p.from}, ${p.to})` }} />
+                      <div
+                        className="h-10 w-full"
+                        style={{
+                          background: p.kind === "gradient" || !p.kind
+                            ? `linear-gradient(135deg, ${p.from}, ${p.to})`
+                            : p.css,
+                          backgroundSize: "cover",
+                        }}
+                      />
                       <span className="bg-card px-1.5 py-1 text-foreground/80">
                         {state.palette === p.id && <Check className="mr-1 inline h-2.5 w-2.5 text-gold" />}
                         {p.label}
