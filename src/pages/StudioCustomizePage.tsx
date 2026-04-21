@@ -443,7 +443,7 @@ export default function StudioCustomizePage() {
                 {effOverlay !== "none" && (
                   <div
                     className={cn(
-                      "pointer-events-none absolute inset-0",
+                      "pointer-events-none absolute inset-0 z-20",
                       effOverlay === "grain"     && "mt-noise opacity-40",
                       effOverlay === "scan"      && "mt-scanlines opacity-30",
                       effOverlay === "leak"      && "mt-light-leak",
@@ -478,7 +478,7 @@ export default function StudioCustomizePage() {
                 {/* Custom text layer (variant overrides align/justify/padding/title size) */}
                 <div
                   className={cn(
-                    "pointer-events-none absolute inset-0 flex flex-col",
+                    "pointer-events-none absolute inset-0 z-40 flex flex-col",
                     effJustify === "start"  && "justify-start",
                     effJustify === "center" && "justify-center",
                     effJustify === "end"    && "justify-end",
