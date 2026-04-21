@@ -491,6 +491,7 @@ export default function StudioCustomizePage() {
           <div className="rounded-3xl border border-border/60 bg-gradient-noir p-4 sm:p-8">
             <div className="mx-auto" style={{ maxWidth: ["banner","paysage","ultrawide","yt-banner","linkedin","ticket"].includes(state.format) ? 640 : 380 }}>
               <div
+                ref={previewRef}
                 key={`${state.format}-${state.palette}-${state.variantSeed}`}
                 className={cn(
                   "relative overflow-hidden border border-border/60 animate-fade-up",
