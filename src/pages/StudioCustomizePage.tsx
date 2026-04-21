@@ -594,21 +594,121 @@ export default function StudioCustomizePage() {
 
           {/* LAYERS TAB */}
           {tab === "layers" && (
-            <Section icon={<Layers className="h-3.5 w-3.5" />} label="Calques">
-              <LayerRow label="Arrière-plan" visible={state.showBackground} onToggle={() => dispatch({ type: "toggle", key: "showBackground" })} />
-              <LayerRow label="Logo EVENA"   visible={state.showLogo}       onToggle={() => dispatch({ type: "toggle", key: "showLogo" })} />
-              <LayerRow label="Badge"        visible={state.showBadge}      onToggle={() => dispatch({ type: "toggle", key: "showBadge" })} />
-              <LayerRow label="Titre"        visible={state.showTitle}      onToggle={() => dispatch({ type: "toggle", key: "showTitle" })} />
-              <LayerRow label="Sous-titre"   visible={state.showSubtitle}   onToggle={() => dispatch({ type: "toggle", key: "showSubtitle" })} />
+            <>
+              <Section icon={<Layers className="h-3.5 w-3.5" />} label="Calques">
+                <LayerRow label="Arrière-plan" visible={state.showBackground} onToggle={() => dispatch({ type: "toggle", key: "showBackground" })} />
+                <LayerRow label="Logo EVENA"   visible={state.showLogo}       onToggle={() => dispatch({ type: "toggle", key: "showLogo" })} />
+                <LayerRow label="Badge"        visible={state.showBadge}      onToggle={() => dispatch({ type: "toggle", key: "showBadge" })} />
+                <LayerRow label="Titre"        visible={state.showTitle}      onToggle={() => dispatch({ type: "toggle", key: "showTitle" })} />
+                <LayerRow label="Sous-titre"   visible={state.showSubtitle}   onToggle={() => dispatch({ type: "toggle", key: "showSubtitle" })} />
 
-              <div className="mt-3 border-t border-border/60 pt-3">
-                <Slider label="Coins arrondis" value={state.rounded} min={0} max={32} onChange={(v) => set({ rounded: v })} unit="px" />
-                <div className="mt-2 flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2 text-xs">
-                  <span className="text-foreground/80">Ombre portée</span>
-                  <Switch active={state.shadow} onClick={() => dispatch({ type: "toggle", key: "shadow" })} />
+                <div className="mt-3 border-t border-border/60 pt-3">
+                  <Slider label="Coins arrondis" value={state.rounded} min={0} max={32} onChange={(v) => set({ rounded: v })} unit="px" />
+                  <div className="mt-2 flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2 text-xs">
+                    <span className="text-foreground/80">Ombre portée</span>
+                    <Switch active={state.shadow} onClick={() => dispatch({ type: "toggle", key: "shadow" })} />
+                  </div>
                 </div>
-              </div>
-            </Section>
+              </Section>
+
+              {/* User image upload */}
+              <Section icon={<ImageIcon className="h-3.5 w-3.5" />} label="Photo / Visuel">
+                <ImageUploader
+                  value={state.userImage}
+                  onChange={(v) => set({ userImage: v })}
+                  emptyLabel="Importer une photo de fond"
+                />
+                {state.userImage && (
+                  <>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(["cover", "contain", "fill"] as const).map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => set({ imageMode: m })}
+                          className={cn(
+                            "rounded-lg border px-2 py-1.5 text-[11px] capitalize transition-luxe",
+                            state.imageMode === m
+                              ? "border-gold bg-gold/10 text-gold"
+                              : "border-border bg-card text-foreground/80 hover:border-gold/40"
+                          )}
+                        >
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                    <Slider label="Zoom" value={state.imageScale} min={50} max={300} onChange={(v) => set({ imageScale: v })} unit="%" />
+                    <Slider label="Position X" value={state.imageX} min={-100} max={100} onChange={(v) => set({ imageX: v })} unit="%" />
+                    <Slider label="Position Y" value={state.imageY} min={-100} max={100} onChange={(v) => set({ imageY: v })} unit="%" />
+                    <Slider label="Opacité" value={state.imageOpacity} min={0} max={100} onChange={(v) => set({ imageOpacity: v })} unit="%" />
+                    <Field label="Fusion">
+                      <select
+                        value={state.imageBlend}
+                        onChange={(e) => set({ imageBlend: e.target.value as State["imageBlend"] })}
+                        className="w-full rounded-lg border border-border bg-card px-2 py-2 text-xs text-foreground outline-none focus:border-gold/50"
+                      >
+                        {(["normal","multiply","screen","overlay","soft-light","luminosity"] as const).map((b) => (
+                          <option key={b} value={b}>{b}</option>
+                        ))}
+                      </select>
+                    </Field>
+                    <button
+                      type="button"
+                      onClick={() => set({ userImage: null, imageScale: 100, imageX: 0, imageY: 0, imageOpacity: 100, imageBlend: "normal" })}
+                      className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-1.5 text-[11px] text-destructive transition-luxe hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-3 w-3" /> Retirer la photo
+                    </button>
+                  </>
+                )}
+              </Section>
+
+              {/* User logo upload */}
+              <Section icon={<Sparkles className="h-3.5 w-3.5" />} label="Mon logo">
+                <ImageUploader
+                  value={state.userLogo}
+                  onChange={(v) => set({ userLogo: v })}
+                  emptyLabel="Importer un logo (PNG transparent)"
+                />
+                {state.userLogo && (
+                  <>
+                    <Slider label="Taille" value={state.logoSize} min={24} max={160} onChange={(v) => set({ logoSize: v })} unit="px" />
+                    <Slider label="Opacité" value={state.logoOpacity} min={0} max={100} onChange={(v) => set({ logoOpacity: v })} unit="%" />
+                    <Field label="Position">
+                      <div className="grid grid-cols-4 gap-1.5">
+                        {([
+                          { id: "tl", label: "↖" },
+                          { id: "tr", label: "↗" },
+                          { id: "bl", label: "↙" },
+                          { id: "br", label: "↘" },
+                        ] as const).map((c) => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => set({ logoCorner: c.id })}
+                            className={cn(
+                              "rounded-lg border py-1.5 text-sm transition-luxe",
+                              state.logoCorner === c.id
+                                ? "border-gold bg-gold/10 text-gold"
+                                : "border-border bg-card text-foreground/70 hover:border-gold/40"
+                            )}
+                          >
+                            {c.label}
+                          </button>
+                        ))}
+                      </div>
+                    </Field>
+                    <button
+                      type="button"
+                      onClick={() => set({ userLogo: null })}
+                      className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-1.5 text-[11px] text-destructive transition-luxe hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-3 w-3" /> Retirer le logo
+                    </button>
+                  </>
+                )}
+              </Section>
+            </>
           )}
 
           {/* EFFECTS TAB */}
