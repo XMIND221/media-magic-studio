@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useReducer, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft, Check, Download, Sparkles, Type, Palette, Image as ImageIcon,
   Layers, Wand2, RotateCcw, Copy, Eye, EyeOff, AlignLeft, AlignCenter, AlignRight,
-  Bold, Italic, Sun, CircleDot, Save, Share2,
+  Bold, Italic, Sun, CircleDot, Save, Share2, Upload, Trash2, Move,
 } from "lucide-react";
 import { EVENA_MARKETPLACE_CATALOG } from "@/data/evenaMarketplaceCatalog";
 import { ProductThumbnail } from "@/components/marketplace/ProductThumbnail";
@@ -84,6 +84,19 @@ interface State {
   shadow: boolean;
   rounded: number;       // 0-32
   paletteOpacity: number;// 0-100
+  // User image (background photo)
+  userImage: string | null;     // dataURL
+  imageMode: "cover" | "contain" | "fill";
+  imageScale: number;           // 50-300 (%)
+  imageX: number;               // -100..100 (%)
+  imageY: number;               // -100..100 (%)
+  imageOpacity: number;         // 0-100
+  imageBlend: "normal" | "multiply" | "screen" | "overlay" | "soft-light" | "luminosity";
+  // User logo (small overlay image)
+  userLogo: string | null;
+  logoSize: number;             // 24-160 (px)
+  logoOpacity: number;          // 0-100
+  logoCorner: "tl" | "tr" | "bl" | "br";
 }
 
 type Action =
@@ -129,6 +142,17 @@ export default function StudioCustomizePage() {
     shadow: true,
     rounded: 16,
     paletteOpacity: 100,
+    userImage: null,
+    imageMode: "cover",
+    imageScale: 100,
+    imageX: 0,
+    imageY: 0,
+    imageOpacity: 100,
+    imageBlend: "normal",
+    userLogo: null,
+    logoSize: 56,
+    logoOpacity: 100,
+    logoCorner: "tl",
   }), [product]);
 
   const [state, dispatch] = useReducer(reducer, initial);
@@ -233,6 +257,45 @@ export default function StudioCustomizePage() {
                       : <ProductThumbnail product={{ ...product, title: state.title }} variantSeed={state.variantSeed + state.palette + state.accent} />
                   )}
                 </div>
+
+                {/* User-uploaded background image */}
+                {state.userImage && (
+                  <img
+                    src={state.userImage}
+                    alt="Visuel utilisateur"
+                    className="pointer-events-none absolute inset-0 h-full w-full select-none"
+                    style={{
+                      objectFit: state.imageMode,
+                      transform: `translate(${state.imageX}%, ${state.imageY}%) scale(${state.imageScale / 100})`,
+                      transformOrigin: "center",
+                      opacity: state.imageOpacity / 100,
+                      mixBlendMode: state.imageBlend,
+                      filter: filterCss,
+                    }}
+                    draggable={false}
+                  />
+                )}
+
+                {/* User logo overlay */}
+                {state.userLogo && (
+                  <img
+                    src={state.userLogo}
+                    alt="Logo utilisateur"
+                    className={cn(
+                      "pointer-events-none absolute select-none object-contain",
+                      state.logoCorner === "tl" && "left-3 top-3",
+                      state.logoCorner === "tr" && "right-3 top-3",
+                      state.logoCorner === "bl" && "left-3 bottom-3",
+                      state.logoCorner === "br" && "right-3 bottom-3",
+                    )}
+                    style={{
+                      width: state.logoSize,
+                      height: state.logoSize,
+                      opacity: state.logoOpacity / 100,
+                    }}
+                    draggable={false}
+                  />
+                )}
 
                 {/* Overlay */}
                 {state.overlay !== "none" && (
@@ -531,21 +594,121 @@ export default function StudioCustomizePage() {
 
           {/* LAYERS TAB */}
           {tab === "layers" && (
-            <Section icon={<Layers className="h-3.5 w-3.5" />} label="Calques">
-              <LayerRow label="Arrière-plan" visible={state.showBackground} onToggle={() => dispatch({ type: "toggle", key: "showBackground" })} />
-              <LayerRow label="Logo EVENA"   visible={state.showLogo}       onToggle={() => dispatch({ type: "toggle", key: "showLogo" })} />
-              <LayerRow label="Badge"        visible={state.showBadge}      onToggle={() => dispatch({ type: "toggle", key: "showBadge" })} />
-              <LayerRow label="Titre"        visible={state.showTitle}      onToggle={() => dispatch({ type: "toggle", key: "showTitle" })} />
-              <LayerRow label="Sous-titre"   visible={state.showSubtitle}   onToggle={() => dispatch({ type: "toggle", key: "showSubtitle" })} />
+            <>
+              <Section icon={<Layers className="h-3.5 w-3.5" />} label="Calques">
+                <LayerRow label="Arrière-plan" visible={state.showBackground} onToggle={() => dispatch({ type: "toggle", key: "showBackground" })} />
+                <LayerRow label="Logo EVENA"   visible={state.showLogo}       onToggle={() => dispatch({ type: "toggle", key: "showLogo" })} />
+                <LayerRow label="Badge"        visible={state.showBadge}      onToggle={() => dispatch({ type: "toggle", key: "showBadge" })} />
+                <LayerRow label="Titre"        visible={state.showTitle}      onToggle={() => dispatch({ type: "toggle", key: "showTitle" })} />
+                <LayerRow label="Sous-titre"   visible={state.showSubtitle}   onToggle={() => dispatch({ type: "toggle", key: "showSubtitle" })} />
 
-              <div className="mt-3 border-t border-border/60 pt-3">
-                <Slider label="Coins arrondis" value={state.rounded} min={0} max={32} onChange={(v) => set({ rounded: v })} unit="px" />
-                <div className="mt-2 flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2 text-xs">
-                  <span className="text-foreground/80">Ombre portée</span>
-                  <Switch active={state.shadow} onClick={() => dispatch({ type: "toggle", key: "shadow" })} />
+                <div className="mt-3 border-t border-border/60 pt-3">
+                  <Slider label="Coins arrondis" value={state.rounded} min={0} max={32} onChange={(v) => set({ rounded: v })} unit="px" />
+                  <div className="mt-2 flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2 text-xs">
+                    <span className="text-foreground/80">Ombre portée</span>
+                    <Switch active={state.shadow} onClick={() => dispatch({ type: "toggle", key: "shadow" })} />
+                  </div>
                 </div>
-              </div>
-            </Section>
+              </Section>
+
+              {/* User image upload */}
+              <Section icon={<ImageIcon className="h-3.5 w-3.5" />} label="Photo / Visuel">
+                <ImageUploader
+                  value={state.userImage}
+                  onChange={(v) => set({ userImage: v })}
+                  emptyLabel="Importer une photo de fond"
+                />
+                {state.userImage && (
+                  <>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(["cover", "contain", "fill"] as const).map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => set({ imageMode: m })}
+                          className={cn(
+                            "rounded-lg border px-2 py-1.5 text-[11px] capitalize transition-luxe",
+                            state.imageMode === m
+                              ? "border-gold bg-gold/10 text-gold"
+                              : "border-border bg-card text-foreground/80 hover:border-gold/40"
+                          )}
+                        >
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                    <Slider label="Zoom" value={state.imageScale} min={50} max={300} onChange={(v) => set({ imageScale: v })} unit="%" />
+                    <Slider label="Position X" value={state.imageX} min={-100} max={100} onChange={(v) => set({ imageX: v })} unit="%" />
+                    <Slider label="Position Y" value={state.imageY} min={-100} max={100} onChange={(v) => set({ imageY: v })} unit="%" />
+                    <Slider label="Opacité" value={state.imageOpacity} min={0} max={100} onChange={(v) => set({ imageOpacity: v })} unit="%" />
+                    <Field label="Fusion">
+                      <select
+                        value={state.imageBlend}
+                        onChange={(e) => set({ imageBlend: e.target.value as State["imageBlend"] })}
+                        className="w-full rounded-lg border border-border bg-card px-2 py-2 text-xs text-foreground outline-none focus:border-gold/50"
+                      >
+                        {(["normal","multiply","screen","overlay","soft-light","luminosity"] as const).map((b) => (
+                          <option key={b} value={b}>{b}</option>
+                        ))}
+                      </select>
+                    </Field>
+                    <button
+                      type="button"
+                      onClick={() => set({ userImage: null, imageScale: 100, imageX: 0, imageY: 0, imageOpacity: 100, imageBlend: "normal" })}
+                      className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-1.5 text-[11px] text-destructive transition-luxe hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-3 w-3" /> Retirer la photo
+                    </button>
+                  </>
+                )}
+              </Section>
+
+              {/* User logo upload */}
+              <Section icon={<Sparkles className="h-3.5 w-3.5" />} label="Mon logo">
+                <ImageUploader
+                  value={state.userLogo}
+                  onChange={(v) => set({ userLogo: v })}
+                  emptyLabel="Importer un logo (PNG transparent)"
+                />
+                {state.userLogo && (
+                  <>
+                    <Slider label="Taille" value={state.logoSize} min={24} max={160} onChange={(v) => set({ logoSize: v })} unit="px" />
+                    <Slider label="Opacité" value={state.logoOpacity} min={0} max={100} onChange={(v) => set({ logoOpacity: v })} unit="%" />
+                    <Field label="Position">
+                      <div className="grid grid-cols-4 gap-1.5">
+                        {([
+                          { id: "tl", label: "↖" },
+                          { id: "tr", label: "↗" },
+                          { id: "bl", label: "↙" },
+                          { id: "br", label: "↘" },
+                        ] as const).map((c) => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => set({ logoCorner: c.id })}
+                            className={cn(
+                              "rounded-lg border py-1.5 text-sm transition-luxe",
+                              state.logoCorner === c.id
+                                ? "border-gold bg-gold/10 text-gold"
+                                : "border-border bg-card text-foreground/70 hover:border-gold/40"
+                            )}
+                          >
+                            {c.label}
+                          </button>
+                        ))}
+                      </div>
+                    </Field>
+                    <button
+                      type="button"
+                      onClick={() => set({ userLogo: null })}
+                      className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-1.5 text-[11px] text-destructive transition-luxe hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-3 w-3" /> Retirer le logo
+                    </button>
+                  </>
+                )}
+              </Section>
+            </>
           )}
 
           {/* EFFECTS TAB */}
@@ -728,5 +891,74 @@ function QuickBtn({ icon, label }: { icon: React.ReactNode; label: string }) {
     >
       {icon} {label}
     </button>
+  );
+}
+
+function ImageUploader({
+  value, onChange, emptyLabel,
+}: { value: string | null; onChange: (v: string | null) => void; emptyLabel: string }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
+
+  const readFile = (file: File) => {
+    if (!file.type.startsWith("image/")) return;
+    if (file.size > 8 * 1024 * 1024) {
+      alert("Image trop lourde (max 8 Mo).");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => onChange(typeof reader.result === "string" ? reader.result : null);
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) readFile(f);
+          e.target.value = "";
+        }}
+      />
+      {value ? (
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          className="group relative block w-full overflow-hidden rounded-lg border border-border bg-card transition-luxe hover:border-gold/50"
+        >
+          <img src={value} alt="aperçu" className="h-24 w-full object-cover" />
+          <span className="absolute inset-0 grid place-items-center bg-background/60 text-[11px] font-medium text-foreground opacity-0 transition-opacity group-hover:opacity-100">
+            <span className="inline-flex items-center gap-1.5"><Upload className="h-3 w-3" /> Remplacer</span>
+          </span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragOver(false);
+            const f = e.dataTransfer.files?.[0];
+            if (f) readFile(f);
+          }}
+          className={cn(
+            "flex w-full flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed px-3 py-5 text-[11px] transition-luxe",
+            dragOver
+              ? "border-gold bg-gold/10 text-gold"
+              : "border-border bg-card/60 text-muted-foreground hover:border-gold/40 hover:text-foreground"
+          )}
+        >
+          <Upload className="h-4 w-4" />
+          {emptyLabel}
+          <span className="text-[10px] opacity-70">Glissez-déposez ou cliquez · max 8 Mo</span>
+        </button>
+      )}
+    </div>
   );
 }
