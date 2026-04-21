@@ -836,8 +836,7 @@ export default function StudioCustomizePage() {
               </Section>
 
               <Section icon={<Wand2 className="h-3.5 w-3.5" />} label="Texture / Overlay">
-                <div className="grid grid-cols-2 gap-2">
-                  {OVERLAYS.map((o) => (
+                <div className="grid grid-cols-3 gap-2">
                     <button
                       key={o.id}
                       type="button"
