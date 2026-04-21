@@ -229,8 +229,17 @@ interface State {
   // Text positioning offset
   textX: number;          // -50..50 (%)
   textY: number;          // -50..50 (%)
+  // Per-text colors + sizes
+  titleColor: string;          // CSS color (default white)
+  subtitleSize: number;        // 8-28 (px)
+  subtitleColor: string;       // CSS color (defaults to accent if "")
+  subtitleTracking: number;    // 0-50 (× 0.01em)
+  badgeColor: string;          // background color (defaults to accent if "")
+  badgeTextColor: string;      // foreground color
   // Overlay impact
   overlayIntensity: number; // 0-200 (%)
+  // Compare mode
+  compareMode: "off" | "ba" | "grid";
 }
 
 type Action =
