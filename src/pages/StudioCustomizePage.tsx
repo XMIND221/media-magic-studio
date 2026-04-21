@@ -4,7 +4,9 @@ import {
   ArrowLeft, Check, Download, Sparkles, Type, Palette, Image as ImageIcon,
   Layers, Wand2, RotateCcw, Copy, Eye, EyeOff, AlignLeft, AlignCenter, AlignRight,
   Bold, Italic, Sun, CircleDot, Save, Share2, Upload, Trash2, Move, Star,
+  Grid3x3, SplitSquareHorizontal, Zap,
 } from "lucide-react";
+import { toPng } from "html-to-image";
 import { useBlendFavorites } from "@/hooks/use-marketplace-storage";
 import { EVENA_MARKETPLACE_CATALOG } from "@/data/evenaMarketplaceCatalog";
 import { ProductThumbnail } from "@/components/marketplace/ProductThumbnail";
