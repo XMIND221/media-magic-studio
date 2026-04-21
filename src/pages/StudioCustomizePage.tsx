@@ -992,6 +992,12 @@ export default function StudioCustomizePage() {
                     </button>
                   ))}
                 </div>
+                {state.overlay !== "none" && (
+                  <div className="mt-3 border-t border-border/60 pt-3">
+                    <Slider label="Intensité de l'overlay" value={state.overlayIntensity} min={0} max={200} onChange={(v) => set({ overlayIntensity: v })} unit="%" />
+                    <p className="mt-1 text-[10px] text-muted-foreground">↑ 100% pour un effet plus marqué — jusqu'à 200%.</p>
+                  </div>
+                )}
               </Section>
             </>
           )}
