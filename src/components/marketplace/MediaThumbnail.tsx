@@ -28,30 +28,38 @@ type MediaArchetype =
   | "premium-glass"
   | "premium-gold";
 
+// Each subcategory rotates through 3-4 distinct archetypes based on product.index,
+// so adjacent cards in the same subcategory look visually different (not just recolored).
+const SUBCATEGORY_ARCHETYPES: Record<string, MediaArchetype[]> = {
+  "Social Media":     ["social-story", "social-grid", "creator-quote", "premium-glass"],
+  "YouTube / Video":  ["yt-thumbnail", "yt-banner", "yt-podcast", "video-frame"],
+  "Promo / Ads":      ["promo-burst", "ecom-card", "premium-neon", "news-ticker"],
+  "Business Media":   ["business-tile", "premium-glass", "creator-quote", "social-grid"],
+  "Event Media":      ["event-spotlight", "premium-cinematic", "video-frame", "promo-burst"],
+  "Music / Artist":   ["music-cover", "yt-podcast", "premium-neon", "premium-cinematic"],
+  "News / Info":      ["news-ticker", "video-frame", "business-tile", "yt-thumbnail"],
+  "E-commerce":       ["ecom-card", "promo-burst", "premium-glass", "social-grid"],
+  "Creator Content":  ["creator-quote", "social-story", "social-grid", "premium-glass"],
+  "Premium Visual":   ["premium-cinematic", "premium-neon", "premium-glass", "premium-gold"],
+};
+
 function archetypeFor(p: MarketplaceProduct): MediaArchetype {
   const t = p.title.toLowerCase();
-  const s = p.subcategory;
-  if (s === "Premium Visual") {
+  // Premium subcategory: keep title-driven mapping (cinematic/neon/glass/gold)
+  if (p.subcategory === "Premium Visual") {
     if (t.includes("cinematic")) return "premium-cinematic";
     if (t.includes("neon")) return "premium-neon";
     if (t.includes("glass")) return "premium-glass";
-    return "premium-gold";
+    if (t.includes("gold") || t.includes("luxury")) return "premium-gold";
   }
-  if (s === "Music / Artist") return "music-cover";
-  if (s === "News / Info") return "news-ticker";
-  if (s === "E-commerce") return "ecom-card";
-  if (s === "Creator Content") return "creator-quote";
-  if (s === "Promo / Ads") return "promo-burst";
-  if (s === "Business Media") return "business-tile";
-  if (s === "Event Media") return "event-spotlight";
-  if (s === "YouTube / Video") {
+  // YouTube: keep title-driven for thumbnail/banner/podcast
+  if (p.subcategory === "YouTube / Video") {
     if (t.includes("thumbnail")) return "yt-thumbnail";
     if (t.includes("banner")) return "yt-banner";
     if (t.includes("podcast")) return "yt-podcast";
-    return "video-frame";
   }
-  // Social Media
-  return p.index % 2 === 0 ? "social-grid" : "social-story";
+  const pool = SUBCATEGORY_ARCHETYPES[p.subcategory ?? ""] ?? ["social-story", "social-grid", "creator-quote"];
+  return pool[Math.abs(p.index) % pool.length];
 }
 
 interface Props {
