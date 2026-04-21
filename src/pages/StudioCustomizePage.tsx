@@ -947,8 +947,8 @@ export default function StudioCustomizePage() {
                     <div className="rounded-lg border border-border/60 bg-card/40 p-2">
                       <p className="mb-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">Avant / Après</p>
                       <div className="grid grid-cols-2 gap-2">
-                        <BeforeAfterTile src={state.userLogo} blend="normal" label="Avant" kind="logo" />
-                        <BeforeAfterTile src={state.userLogo} blend={state.logoBlend} label="Après" kind="logo" />
+                        <BeforeAfterTile src={state.userLogo} blend="normal" label="Avant" kind="logo" crop={{ opacity: state.logoOpacity }} />
+                        <BeforeAfterTile src={state.userLogo} blend={state.logoBlend} label="Après" kind="logo" crop={{ opacity: state.logoOpacity }} />
                       </div>
                     </div>
                     <button
