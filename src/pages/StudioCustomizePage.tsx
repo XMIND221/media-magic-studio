@@ -356,6 +356,96 @@ export default function StudioCustomizePage() {
   // Variant seed for thumbnail engines: ONLY variant — never font/accent (font shouldn't change colors)
   const thumbSeed = `${state.variantSeed}-${state.variantSeed.repeat(3)}-${state.palette}`;
 
+  // Refs for PNG export
+  const previewRef = useRef<HTMLDivElement>(null);
+  const [exporting, setExporting] = useState(false);
+  const handleExport = async () => {
+    if (!previewRef.current) return;
+    setExporting(true);
+    try {
+      const dataUrl = await toPng(previewRef.current, {
+        cacheBust: true,
+        pixelRatio: 3, // haute résolution
+        backgroundColor: undefined,
+      });
+      const link = document.createElement("a");
+      link.download = `evena-${product?.id ?? "design"}-${state.variantSeed}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error("Export PNG failed", err);
+      alert("Échec de l'export. Si vous utilisez une image distante, importez-la directement (PNG/JPG).");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // Favorites for compare grid
+  const photoFavs = useBlendFavorites("photo");
+  const logoFavs = useBlendFavorites("logo");
+
+  // Auto-look : analyse simple de la luminance moyenne d'une image dataURL
+  const autoPickBlend = async (src: string | null, kind: "photo" | "logo"): Promise<string | null> => {
+    if (!src) return null;
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        try {
+          const c = document.createElement("canvas");
+          const w = (c.width = 32);
+          const h = (c.height = 32);
+          const ctx = c.getContext("2d");
+          if (!ctx) return resolve(null);
+          ctx.drawImage(img, 0, 0, w, h);
+          const data = ctx.getImageData(0, 0, w, h).data;
+          let lum = 0, sat = 0, alpha = 0, count = 0;
+          for (let i = 0; i < data.length; i += 4) {
+            const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
+            if (a < 16) continue;
+            lum += (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            sat += max === 0 ? 0 : (max - min) / max;
+            alpha += a / 255;
+            count++;
+          }
+          const avgLum = count ? lum / count : 0.5;
+          const avgSat = count ? sat / count : 0.5;
+          const avgAlpha = count ? alpha / count : 1;
+          // Heuristique
+          if (kind === "logo") {
+            if (avgAlpha < 0.85) return resolve("screen");          // PNG transparent → halo
+            if (avgLum < 0.3) return resolve("screen");             // logo sombre → screen
+            if (avgLum > 0.75 && avgSat < 0.2) return resolve("multiply"); // logo clair mono → encre
+            if (avgSat > 0.5) return resolve("color-dodge");        // logo coloré → néon
+            return resolve("overlay");
+          } else {
+            if (avgLum < 0.25) return resolve("screen");            // photo sombre → lumineux
+            if (avgLum > 0.7) return resolve("multiply");           // photo claire → velours
+            if (avgSat > 0.55) return resolve("soft-light");        // photo saturée → soyeux
+            return resolve("overlay");                              // par défaut → cinéma
+          }
+        } catch {
+          resolve(null);
+        }
+      };
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+  };
+
+  const handleAutoLook = async () => {
+    const [b1, b2] = await Promise.all([
+      autoPickBlend(state.userImage, "photo"),
+      autoPickBlend(state.userLogo, "logo"),
+    ]);
+    const patch: Partial<State> = {};
+    if (b1) patch.imageBlend = b1 as State["imageBlend"];
+    if (b2) patch.logoBlend = b2 as State["logoBlend"];
+    if (Object.keys(patch).length) set(patch);
+  };
+
+
   return (
     <div className="min-h-screen bg-background">
       {/* Top bar */}
