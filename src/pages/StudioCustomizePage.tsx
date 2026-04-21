@@ -450,39 +450,45 @@ export default function StudioCustomizePage() {
                   />
                 )}
 
-                {/* Overlay (variant can force one when user has none) */}
+                {/* Overlay (variant can force one when user has none) — intensity boosted */}
                 {effOverlay !== "none" && (
                   <div
                     className={cn(
                       "pointer-events-none absolute inset-0 z-20",
-                      effOverlay === "grain"     && "mt-noise opacity-40",
-                      effOverlay === "scan"      && "mt-scanlines opacity-30",
+                      effOverlay === "grain"     && "mt-noise",
+                      effOverlay === "scan"      && "mt-scanlines",
                       effOverlay === "leak"      && "mt-light-leak",
                       effOverlay === "vignette"  && "mt-vignette",
-                      effOverlay === "grid"      && "mt-grid-soft opacity-60",
+                      effOverlay === "grid"      && "mt-grid-soft",
                       effOverlay === "shimmer"   && "mt-gold-shimmer",
-                      effOverlay === "vinyl"     && "mt-vinyl opacity-40",
+                      effOverlay === "vinyl"     && "mt-vinyl",
                       effOverlay === "spotlight" && "mt-spotlight",
                       effOverlay === "orbs"      && "mt-orbs",
                       effOverlay === "neon"      && "mt-neon-bg",
                     )}
-                    style={
-                      effOverlay === "halftone"
-                        ? { backgroundImage: "radial-gradient(hsl(0 0% 0% / .55) 1.2px, transparent 1.4px)", backgroundSize: "5px 5px" }
+                    style={{
+                      opacity: state.overlayIntensity / 100,
+                      mixBlendMode:
+                        effOverlay === "duotone" ? "color"
+                        : effOverlay === "shimmer" || effOverlay === "leak" || effOverlay === "neon" || effOverlay === "spotlight" ? "screen"
+                        : effOverlay === "halftone" || effOverlay === "crt" || effOverlay === "vignette" ? "multiply"
+                        : "normal",
+                      ...(effOverlay === "halftone"
+                        ? { backgroundImage: "radial-gradient(hsl(0 0% 0% / .9) 1.6px, transparent 1.8px)", backgroundSize: "5px 5px" }
                         : effOverlay === "stripes"
-                        ? { backgroundImage: "repeating-linear-gradient(90deg, hsl(0 0% 0% / .35) 0 6px, transparent 6px 12px)" }
+                        ? { backgroundImage: "repeating-linear-gradient(90deg, hsl(0 0% 0% / .55) 0 6px, transparent 6px 12px)" }
                         : effOverlay === "diagonal"
-                        ? { backgroundImage: "repeating-linear-gradient(45deg, hsl(43 70% 55% / .12) 0 8px, transparent 8px 18px)" }
+                        ? { backgroundImage: "repeating-linear-gradient(45deg, hsl(43 80% 55% / .35) 0 8px, transparent 8px 18px)" }
                         : effOverlay === "crt"
-                        ? { backgroundImage: "repeating-linear-gradient(0deg, hsl(0 0% 0% / .25) 0 2px, transparent 2px 4px), radial-gradient(120% 80% at 50% 50%, transparent 60%, hsl(0 0% 0% / .55))" }
+                        ? { backgroundImage: "repeating-linear-gradient(0deg, hsl(0 0% 0% / .45) 0 2px, transparent 2px 4px), radial-gradient(120% 80% at 50% 50%, transparent 55%, hsl(0 0% 0% / .8))" }
                         : effOverlay === "dust"
-                        ? { backgroundImage: "radial-gradient(circle at 20% 30%, hsl(0 0% 100% / .15) 1px, transparent 2px), radial-gradient(circle at 70% 80%, hsl(0 0% 100% / .12) 1px, transparent 2px), radial-gradient(circle at 40% 70%, hsl(0 0% 100% / .10) 1px, transparent 2px)", backgroundSize: "120px 120px, 90px 90px, 150px 150px" }
+                        ? { backgroundImage: "radial-gradient(circle at 20% 30%, hsl(0 0% 100% / .35) 1px, transparent 2px), radial-gradient(circle at 70% 80%, hsl(0 0% 100% / .3) 1px, transparent 2px), radial-gradient(circle at 40% 70%, hsl(0 0% 100% / .25) 1px, transparent 2px)", backgroundSize: "120px 120px, 90px 90px, 150px 150px" }
                         : effOverlay === "bokeh"
-                        ? { backgroundImage: "radial-gradient(circle at 20% 30%, hsl(43 80% 60% / .35) 0, transparent 14px), radial-gradient(circle at 70% 60%, hsl(310 70% 60% / .3) 0, transparent 18px), radial-gradient(circle at 50% 80%, hsl(190 80% 60% / .3) 0, transparent 22px)" }
+                        ? { backgroundImage: "radial-gradient(circle at 20% 30%, hsl(43 80% 60% / .7) 0, transparent 18px), radial-gradient(circle at 70% 60%, hsl(310 70% 60% / .65) 0, transparent 22px), radial-gradient(circle at 50% 80%, hsl(190 80% 60% / .65) 0, transparent 26px)" }
                         : effOverlay === "duotone"
-                        ? { background: "linear-gradient(135deg, hsl(43 80% 55% / .35), hsl(280 70% 50% / .35))", mixBlendMode: "color" }
-                        : undefined
-                    }
+                        ? { background: "linear-gradient(135deg, hsl(43 80% 55% / .65), hsl(280 70% 50% / .65))" }
+                        : {}),
+                    }}
                   />
                 )}
 
