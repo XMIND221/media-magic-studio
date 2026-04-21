@@ -893,3 +893,72 @@ function QuickBtn({ icon, label }: { icon: React.ReactNode; label: string }) {
     </button>
   );
 }
+
+function ImageUploader({
+  value, onChange, emptyLabel,
+}: { value: string | null; onChange: (v: string | null) => void; emptyLabel: string }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
+
+  const readFile = (file: File) => {
+    if (!file.type.startsWith("image/")) return;
+    if (file.size > 8 * 1024 * 1024) {
+      alert("Image trop lourde (max 8 Mo).");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => onChange(typeof reader.result === "string" ? reader.result : null);
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) readFile(f);
+          e.target.value = "";
+        }}
+      />
+      {value ? (
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          className="group relative block w-full overflow-hidden rounded-lg border border-border bg-card transition-luxe hover:border-gold/50"
+        >
+          <img src={value} alt="aperçu" className="h-24 w-full object-cover" />
+          <span className="absolute inset-0 grid place-items-center bg-background/60 text-[11px] font-medium text-foreground opacity-0 transition-opacity group-hover:opacity-100">
+            <span className="inline-flex items-center gap-1.5"><Upload className="h-3 w-3" /> Remplacer</span>
+          </span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragOver(false);
+            const f = e.dataTransfer.files?.[0];
+            if (f) readFile(f);
+          }}
+          className={cn(
+            "flex w-full flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed px-3 py-5 text-[11px] transition-luxe",
+            dragOver
+              ? "border-gold bg-gold/10 text-gold"
+              : "border-border bg-card/60 text-muted-foreground hover:border-gold/40 hover:text-foreground"
+          )}
+        >
+          <Upload className="h-4 w-4" />
+          {emptyLabel}
+          <span className="text-[10px] opacity-70">Glissez-déposez ou cliquez · max 8 Mo</span>
+        </button>
+      )}
+    </div>
+  );
+}
