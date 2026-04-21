@@ -3,8 +3,9 @@ import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft, Check, Download, Sparkles, Type, Palette, Image as ImageIcon,
   Layers, Wand2, RotateCcw, Copy, Eye, EyeOff, AlignLeft, AlignCenter, AlignRight,
-  Bold, Italic, Sun, CircleDot, Save, Share2, Upload, Trash2, Move,
+  Bold, Italic, Sun, CircleDot, Save, Share2, Upload, Trash2, Move, Star,
 } from "lucide-react";
+import { useBlendFavorites } from "@/hooks/use-marketplace-storage";
 import { EVENA_MARKETPLACE_CATALOG } from "@/data/evenaMarketplaceCatalog";
 import { ProductThumbnail } from "@/components/marketplace/ProductThumbnail";
 import { MediaThumbnail } from "@/components/marketplace/MediaThumbnail";
