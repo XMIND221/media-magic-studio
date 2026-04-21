@@ -142,6 +142,17 @@ export default function StudioCustomizePage() {
     shadow: true,
     rounded: 16,
     paletteOpacity: 100,
+    userImage: null,
+    imageMode: "cover",
+    imageScale: 100,
+    imageX: 0,
+    imageY: 0,
+    imageOpacity: 100,
+    imageBlend: "normal",
+    userLogo: null,
+    logoSize: 56,
+    logoOpacity: 100,
+    logoCorner: "tl",
   }), [product]);
 
   const [state, dispatch] = useReducer(reducer, initial);
