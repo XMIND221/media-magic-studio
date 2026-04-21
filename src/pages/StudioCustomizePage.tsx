@@ -863,6 +863,20 @@ export default function StudioCustomizePage() {
                       />
                     </Field>
 
+                    <div className="rounded-lg border border-border/60 bg-card/40 p-2">
+                      <p className="mb-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">Avant / Après</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <BeforeAfterTile
+                          src={state.userImage} blend="normal" label="Avant" kind="photo"
+                          crop={{ scale: state.imageScale, x: state.imageX, y: state.imageY, rotate: state.imageRotate, opacity: state.imageOpacity }}
+                        />
+                        <BeforeAfterTile
+                          src={state.userImage} blend={state.imageBlend} label="Après" kind="photo"
+                          crop={{ scale: state.imageScale, x: state.imageX, y: state.imageY, rotate: state.imageRotate, opacity: state.imageOpacity }}
+                        />
+                      </div>
+                    </div>
+
                     <button
                       type="button"
                       onClick={() => set({ userImage: null, imageScale: 100, imageX: 0, imageY: 0, imageRotate: 0, imageOpacity: 100, imageBlend: "normal" })}
