@@ -222,7 +222,12 @@ interface State {
   logoSize: number;             // 24-160 (px)
   logoOpacity: number;          // 0-100
   logoCorner: "tl" | "tr" | "bl" | "br";
-  logoBlend: "normal" | "multiply" | "screen" | "overlay" | "soft-light" | "luminosity" | "color-dodge" | "difference";
+  logoBlend: "normal" | "multiply" | "screen" | "overlay" | "soft-light" | "luminosity" | "color-dodge" | "difference" | "exclusion" | "hue" | "saturation" | "lighten";
+  // Text positioning offset
+  textX: number;          // -50..50 (%)
+  textY: number;          // -50..50 (%)
+  // Overlay impact
+  overlayIntensity: number; // 0-200 (%)
 }
 
 type Action =
