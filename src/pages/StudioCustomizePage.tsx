@@ -536,7 +536,7 @@ export default function StudioCustomizePage() {
               </div>
               <div className="mt-4 flex items-center justify-between text-[11px] text-muted-foreground">
                 <span className="uppercase tracking-[0.3em]">{activeFormat.label}</span>
-                <span>Variant {state.variantSeed}</span>
+                <span>Variant {state.variantSeed} · {profile.label}</span>
               </div>
             </div>
           </div>
