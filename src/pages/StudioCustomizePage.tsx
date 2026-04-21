@@ -97,6 +97,7 @@ interface State {
   logoSize: number;             // 24-160 (px)
   logoOpacity: number;          // 0-100
   logoCorner: "tl" | "tr" | "bl" | "br";
+}
 
 type Action =
   | { type: "set"; patch: Partial<State> }
