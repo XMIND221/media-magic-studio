@@ -325,6 +325,12 @@ export default function StudioCustomizePage() {
   const activeFont    = useMemo(() => FONT_PAIRS.find(f => f.id === state.font)!, [state.font]);
   const activeFormat  = useMemo(() => FORMATS.find(f => f.id === state.format) ?? FORMATS[0], [state.format]);
 
+  // Refs / hooks must be declared before any early return
+  const previewRef = useRef<HTMLDivElement>(null);
+  const [exporting, setExporting] = useState(false);
+  const photoFavs = useBlendFavorites("photo");
+  const logoFavs = useBlendFavorites("logo");
+
   if (!product) {
     return (
       <div className="grid min-h-screen place-items-center bg-background">
