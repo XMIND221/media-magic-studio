@@ -1074,6 +1074,70 @@ export default function StudioCustomizePage() {
                     <p className="rounded-md border border-gold/20 bg-gold/5 px-2 py-1.5 text-[10px] text-gold/80">
                       💡 Astuce : glissez directement la photo dans l'aperçu pour la déplacer.
                     </p>
+
+                    <Field label="Cadrage rapide (alignement)">
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {([
+                          { id: "tl", x: -50, y: -50, label: "↖" },
+                          { id: "tc", x: 0,   y: -50, label: "↑" },
+                          { id: "tr", x: 50,  y: -50, label: "↗" },
+                          { id: "ml", x: -50, y: 0,   label: "←" },
+                          { id: "mc", x: 0,   y: 0,   label: "●" },
+                          { id: "mr", x: 50,  y: 0,   label: "→" },
+                          { id: "bl", x: -50, y: 50,  label: "↙" },
+                          { id: "bc", x: 0,   y: 50,  label: "↓" },
+                          { id: "br", x: 50,  y: 50,  label: "↘" },
+                        ] as const).map((g) => {
+                          const active = state.imageX === g.x && state.imageY === g.y;
+                          return (
+                            <button
+                              key={g.id}
+                              type="button"
+                              onClick={() => set({ imageX: g.x, imageY: g.y })}
+                              className={cn(
+                                "rounded-md border py-1.5 text-base transition-luxe",
+                                active
+                                  ? "border-gold bg-gold/10 text-gold"
+                                  : "border-border bg-card text-foreground/70 hover:border-gold/40"
+                              )}
+                            >
+                              {g.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </Field>
+
+                    <Field label="Format rapide">
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {([
+                          { id: "carré",    label: "1:1"  },
+                          { id: "post",     label: "4:5"  },
+                          { id: "portrait", label: "3:4"  },
+                          { id: "story",    label: "9:16" },
+                          { id: "paysage",  label: "16:9" },
+                          { id: "banner",   label: "21:9" },
+                        ] as const).map((r) => {
+                          const matched = state.format === r.id;
+                          return (
+                            <button
+                              key={r.id}
+                              type="button"
+                              onClick={() => set({ format: r.id })}
+                              className={cn(
+                                "rounded-md border px-2 py-1.5 text-[11px] transition-luxe",
+                                matched
+                                  ? "border-gold bg-gold/10 text-gold"
+                                  : "border-border bg-card text-foreground/70 hover:border-gold/40"
+                              )}
+                            >
+                              {r.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </Field>
+
                     <Slider label="Zoom" value={state.imageScale} min={50} max={300} onChange={(v) => set({ imageScale: v })} unit="%" />
                     <Slider label="Rotation" value={state.imageRotate} min={-180} max={180} onChange={(v) => set({ imageRotate: v })} unit="°" />
                     <Slider label="Position X" value={state.imageX} min={-100} max={100} onChange={(v) => set({ imageX: v })} unit="%" />
