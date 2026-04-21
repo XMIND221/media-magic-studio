@@ -286,6 +286,9 @@ export default function StudioCustomizePage() {
     logoOpacity: 100,
     logoCorner: "tl",
     logoBlend: "normal",
+    textX: 0,
+    textY: 0,
+    overlayIntensity: 100,
   }), [product]);
 
   const [state, dispatch] = useReducer(reducer, initial);
