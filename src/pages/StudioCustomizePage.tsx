@@ -1700,3 +1700,217 @@ function BeforeAfterTile({
     </div>
   );
 }
+
+/* ----------- Compare grid : mini-previews côte à côte ----------- */
+
+interface MiniPreviewProps {
+  product: any;
+  isMedia: boolean;
+  state: State;
+  activePalette: any;
+  activeAccent: any;
+  activeFont: any;
+  activeFormat: any;
+  profile: VariantProfile;
+  effOverlay: string;
+  effAlign: "left" | "center" | "right";
+  effJustify: "start" | "center" | "end";
+  effPadding: number;
+  effTitleSize: number;
+  effUppercase: boolean;
+  filterCss: string;
+  thumbSeed: string;
+  imageBlendOverride?: string;
+  logoBlendOverride?: string;
+  label?: string;
+}
+
+function MiniPreview(p: MiniPreviewProps) {
+  const s = p.state;
+  const imageBlend = (p.imageBlendOverride ?? s.imageBlend) as React.CSSProperties["mixBlendMode"];
+  const logoBlend = (p.logoBlendOverride ?? s.logoBlend) as React.CSSProperties["mixBlendMode"];
+  return (
+    <div className="overflow-hidden rounded-lg border border-border/60">
+      <div
+        className="relative w-full overflow-hidden"
+        style={{
+          aspectRatio: p.activeFormat.ratio,
+          borderRadius: 0,
+          background: s.showBackground
+            ? (p.activePalette.kind === "gradient" || !p.activePalette.kind
+                ? `linear-gradient(135deg, ${p.activePalette.from}, ${p.activePalette.to})`
+                : p.activePalette.css)
+            : "transparent",
+        }}
+      >
+        {/* Template visual */}
+        <div
+          className="absolute inset-0"
+          style={{
+            filter: p.filterCss,
+            opacity: s.paletteOpacity / 100,
+            transform: `${p.profile.flip ? "scaleX(-1) " : ""}translate(${p.profile.translateX}%, ${p.profile.translateY}%) scale(${p.profile.scale}) rotate(${p.profile.rotate}deg)`,
+            transformOrigin: "center",
+            mixBlendMode: p.profile.blendOverlay,
+          }}
+        >
+          {s.showBackground && (
+            p.isMedia
+              ? <MediaThumbnail product={{ ...p.product, title: s.title }} variantSeed={p.thumbSeed} />
+              : <ProductThumbnail product={{ ...p.product, title: s.title }} variantSeed={p.thumbSeed} />
+          )}
+        </div>
+
+        {/* User image — same crop/position/scale as main preview */}
+        {s.userImage && (
+          <div
+            className="absolute inset-0 z-10 overflow-hidden"
+            style={{ opacity: s.imageOpacity / 100, mixBlendMode: imageBlend }}
+          >
+            <img
+              src={s.userImage}
+              alt=""
+              className="absolute left-1/2 top-1/2 h-full w-full max-w-none"
+              style={{
+                objectFit: s.imageMode,
+                transform: `translate(calc(-50% + ${s.imageX}%), calc(-50% + ${s.imageY}%)) scale(${s.imageScale / 100}) rotate(${s.imageRotate}deg)`,
+                transformOrigin: "center",
+              }}
+              draggable={false}
+            />
+          </div>
+        )}
+
+        {/* User logo */}
+        {s.userLogo && (
+          <img
+            src={s.userLogo}
+            alt=""
+            className={cn(
+              "pointer-events-none absolute z-30 select-none object-contain",
+              s.logoCorner === "tl" && "left-2 top-2",
+              s.logoCorner === "tr" && "right-2 top-2",
+              s.logoCorner === "bl" && "left-2 bottom-2",
+              s.logoCorner === "br" && "right-2 bottom-2",
+            )}
+            style={{
+              width: Math.round(s.logoSize * 0.6),
+              height: "auto",
+              maxHeight: Math.round(s.logoSize * 0.6),
+              opacity: s.logoOpacity / 100,
+              mixBlendMode: logoBlend,
+            }}
+            draggable={false}
+          />
+        )}
+
+        {/* Overlay */}
+        {p.effOverlay !== "none" && (
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-0 z-20",
+              p.effOverlay === "grain"     && "mt-noise",
+              p.effOverlay === "scan"      && "mt-scanlines",
+              p.effOverlay === "leak"      && "mt-light-leak",
+              p.effOverlay === "vignette"  && "mt-vignette",
+              p.effOverlay === "grid"      && "mt-grid-soft",
+              p.effOverlay === "shimmer"   && "mt-gold-shimmer",
+              p.effOverlay === "vinyl"     && "mt-vinyl",
+              p.effOverlay === "spotlight" && "mt-spotlight",
+              p.effOverlay === "orbs"      && "mt-orbs",
+              p.effOverlay === "neon"      && "mt-neon-bg",
+            )}
+            style={{ opacity: s.overlayIntensity / 100 }}
+          />
+        )}
+
+        {/* Scrim + text */}
+        <div className="pointer-events-none absolute inset-0 z-[35]"
+          style={{ background: "radial-gradient(70% 55% at 50% 50%, hsl(0 0% 0% / 0.45), transparent 75%)" }} />
+
+        <div
+          className={cn(
+            "pointer-events-none absolute inset-0 z-40 flex flex-col",
+            p.effJustify === "start"  && "justify-start",
+            p.effJustify === "center" && "justify-center",
+            p.effJustify === "end"    && "justify-end",
+          )}
+          style={{
+            textAlign: p.effAlign,
+            padding: Math.round(p.effPadding * 0.6),
+            transform: `translate(${s.textX}%, ${s.textY}%)`,
+          }}
+        >
+          {s.showTitle && (
+            <h3
+              className="leading-tight drop-shadow-md"
+              style={{
+                fontFamily: p.activeFont.display,
+                fontSize: Math.round(p.effTitleSize * 0.55),
+                fontWeight: s.titleWeight,
+                fontStyle: s.titleItalic ? "italic" : "normal",
+                textTransform: p.effUppercase ? "uppercase" : "none",
+                color: s.titleColor || "#FFFFFF",
+              }}
+            >
+              {s.title || " "}
+            </h3>
+          )}
+        </div>
+
+        {p.label && (
+          <span className="absolute left-1 top-1 z-50 rounded-md bg-black/70 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-widest text-gold backdrop-blur">
+            {p.label}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface CompareGridProps extends Omit<MiniPreviewProps, "label" | "imageBlendOverride" | "logoBlendOverride"> {
+  mode: "ba" | "grid";
+  photoFavs: string[];
+  logoFavs: string[];
+}
+
+function CompareGrid(p: CompareGridProps) {
+  const { mode, photoFavs, logoFavs, ...mini } = p;
+  const hasPhoto = Boolean(p.state.userImage);
+  const favs = hasPhoto ? photoFavs : logoFavs;
+  const blendKey = hasPhoto ? "imageBlendOverride" : "logoBlendOverride";
+
+  if (mode === "ba") {
+    // Show current vs favorite #1 (or "normal" if none saved)
+    const altBlend = favs[0] ?? "normal";
+    return (
+      <div className="grid grid-cols-2 gap-2">
+        <MiniPreview {...mini} label="Actuel" />
+        <MiniPreview {...mini} {...{ [blendKey]: altBlend }} label={`Fav 1 · ${altBlend}`} />
+      </div>
+    );
+  }
+
+  // grid: current + up to 2 favorites = 1-3 tiles
+  const tiles: { override?: string; label: string }[] = [{ label: "Actuel" }];
+  favs.slice(0, 2).forEach((b, i) => tiles.push({ override: b, label: `Fav ${i + 1} · ${b}` }));
+  if (tiles.length === 1) {
+    tiles.push({ override: "normal", label: "Original" });
+    tiles.push({ override: "overlay", label: "Suggestion" });
+  }
+  const cols = tiles.length === 2 ? "grid-cols-2" : "grid-cols-3";
+  return (
+    <>
+      <div className={cn("grid gap-2", cols)}>
+        {tiles.map((t, i) => (
+          <MiniPreview key={i} {...mini} {...(t.override ? { [blendKey]: t.override } : {})} label={t.label} />
+        ))}
+      </div>
+      {favs.length === 0 && (
+        <p className="mt-2 text-[10px] text-muted-foreground">
+          💡 Épinglez vos looks préférés (★) dans Calques → Style de fusion pour les comparer ici.
+        </p>
+      )}
+    </>
+  );
+}
