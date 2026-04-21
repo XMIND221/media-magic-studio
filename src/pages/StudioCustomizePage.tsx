@@ -336,8 +336,8 @@ export default function StudioCustomizePage() {
                 >
                   {state.showBackground && (
                     isMedia
-                      ? <MediaThumbnail product={{ ...product, title: state.title }} variantSeed={state.variantSeed + state.palette + state.accent} />
-                      : <ProductThumbnail product={{ ...product, title: state.title }} variantSeed={state.variantSeed + state.palette + state.accent} />
+                      ? <MediaThumbnail product={{ ...product, title: state.title }} variantSeed={`${state.variantSeed}-${state.variantSeed.repeat(3)}-${state.palette}-${state.accent}-${state.font}`} />
+                      : <ProductThumbnail product={{ ...product, title: state.title }} variantSeed={`${state.variantSeed}-${state.variantSeed.repeat(3)}-${state.palette}-${state.accent}-${state.font}`} />
                   )}
                 </div>
 
