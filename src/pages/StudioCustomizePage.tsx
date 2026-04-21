@@ -1331,69 +1331,119 @@ function BlendLookGrid({
   onChange: (v: string) => void;
 }) {
   const looks = kind === "photo" ? PHOTO_LOOKS : LOGO_LOOKS;
+  const { favs, isFav, toggle } = useBlendFavorites(kind);
+
+  // Pin favorites first, preserving favs order, then the rest in original order.
+  const ordered = useMemo(() => {
+    const favLooks = favs
+      .map((id) => looks.find((l) => l.id === id))
+      .filter((l): l is BlendLook => Boolean(l));
+    const rest = looks.filter((l) => !favs.includes(l.id));
+    return [...favLooks, ...rest];
+  }, [favs, looks]);
+
   return (
-    <div className="grid grid-cols-4 gap-2">
-      {looks.map((l) => {
-        const active = value === l.id;
-        return (
-          <button
-            key={l.id}
-            type="button"
-            onClick={() => onChange(l.id)}
-            title={l.label}
-            className={cn(
-              "group flex flex-col items-stretch overflow-hidden rounded-lg border transition-luxe",
-              active
-                ? "border-gold ring-1 ring-gold/50 shadow-glow"
-                : "border-border hover:border-gold/40"
-            )}
-          >
-            <div
-              className="relative aspect-square w-full"
-              style={{ background: l.backdrop }}
-            >
-              {src ? (
-                <img
-                  src={src}
-                  alt=""
-                  className={cn(
-                    "absolute inset-0 h-full w-full select-none",
-                    kind === "logo" ? "object-contain p-2" : "object-cover"
+    <div>
+      {favs.length > 0 && (
+        <p className="mb-1.5 inline-flex items-center gap-1 text-[9px] uppercase tracking-widest text-gold/70">
+          <Star className="h-2.5 w-2.5 fill-gold" /> Favoris épinglés ({favs.length}/3)
+        </p>
+      )}
+      <div className="grid grid-cols-4 gap-2">
+        {ordered.map((l) => {
+          const active = value === l.id;
+          const fav = isFav(l.id);
+          const pinned = fav;
+          return (
+            <div key={l.id} className="relative">
+              <button
+                type="button"
+                onClick={() => onChange(l.id)}
+                title={l.label}
+                className={cn(
+                  "group flex w-full flex-col items-stretch overflow-hidden rounded-lg border transition-luxe",
+                  active
+                    ? "border-gold ring-1 ring-gold/50 shadow-glow"
+                    : pinned
+                    ? "border-gold/40"
+                    : "border-border hover:border-gold/40"
+                )}
+              >
+                <div
+                  className="relative aspect-square w-full"
+                  style={{ background: l.backdrop }}
+                >
+                  {src ? (
+                    <img
+                      src={src}
+                      alt=""
+                      className={cn(
+                        "absolute inset-0 h-full w-full select-none",
+                        kind === "logo" ? "object-contain p-2" : "object-cover"
+                      )}
+                      style={{ mixBlendMode: l.mode }}
+                      draggable={false}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 grid place-items-center text-[9px] text-white/50">—</div>
                   )}
-                  style={{ mixBlendMode: l.mode }}
-                  draggable={false}
-                />
-              ) : (
-                <div className="absolute inset-0 grid place-items-center text-[9px] text-white/50">—</div>
-              )}
-              {active && (
-                <span className="absolute right-1 top-1 grid h-4 w-4 place-items-center rounded-full bg-gold text-[9px] text-[hsl(var(--ink))]">
-                  <Check className="h-2.5 w-2.5" />
+                  {active && (
+                    <span className="absolute right-1 top-1 grid h-4 w-4 place-items-center rounded-full bg-gold text-[9px] text-[hsl(var(--ink))]">
+                      <Check className="h-2.5 w-2.5" />
+                    </span>
+                  )}
+                </div>
+                <span
+                  className={cn(
+                    "px-1.5 py-1 text-center text-[10px] font-medium tracking-wide",
+                    active ? "bg-gold/10 text-gold" : "bg-card text-foreground/80"
+                  )}
+                >
+                  {l.label}
                 </span>
-              )}
+              </button>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); toggle(l.id); }}
+                aria-label={fav ? "Retirer des favoris" : "Ajouter aux favoris"}
+                title={fav ? "Retirer des favoris" : "Épingler ce look (max 3)"}
+                className={cn(
+                  "absolute left-1 top-1 grid h-5 w-5 place-items-center rounded-full border backdrop-blur transition-luxe",
+                  fav
+                    ? "border-gold bg-gold text-[hsl(var(--ink))]"
+                    : "border-white/30 bg-black/40 text-white/80 hover:border-gold hover:text-gold"
+                )}
+              >
+                <Star className={cn("h-2.5 w-2.5", fav && "fill-current")} />
+              </button>
             </div>
-            <span
-              className={cn(
-                "px-1.5 py-1 text-center text-[10px] font-medium tracking-wide",
-                active ? "bg-gold/10 text-gold" : "bg-card text-foreground/80"
-              )}
-            >
-              {l.label}
-            </span>
-          </button>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
 
+interface BeforeAfterCrop {
+  scale?: number;     // %
+  x?: number;         // %
+  y?: number;         // %
+  rotate?: number;    // deg
+  opacity?: number;   // %
+}
+
 function BeforeAfterTile({
-  src, blend, label, kind = "photo",
-}: { src: string | null; blend: string; label: string; kind?: "photo" | "logo" }) {
+  src, blend, label, kind = "photo", crop,
+}: { src: string | null; blend: string; label: string; kind?: "photo" | "logo"; crop?: BeforeAfterCrop }) {
+  const scale = (crop?.scale ?? 100) / 100;
+  const x = crop?.x ?? 0;
+  const y = crop?.y ?? 0;
+  const rotate = crop?.rotate ?? 0;
+  const opacity = (crop?.opacity ?? 100) / 100;
   return (
     <div className="overflow-hidden rounded-md border border-border/60">
       <div
-        className="relative aspect-square"
+        className="relative aspect-square overflow-hidden"
         style={{
           background:
             "radial-gradient(60% 60% at 30% 30%,hsl(43 80% 55% / .9),transparent 60%),linear-gradient(180deg,#1a1208,#07050a)",
@@ -1404,10 +1454,15 @@ function BeforeAfterTile({
             src={src}
             alt={label}
             className={cn(
-              "absolute inset-0 h-full w-full",
+              "absolute left-1/2 top-1/2 h-full w-full max-w-none",
               kind === "logo" ? "object-contain p-2" : "object-cover"
             )}
-            style={{ mixBlendMode: blend as BlendMode }}
+            style={{
+              mixBlendMode: blend as BlendMode,
+              opacity,
+              transform: `translate(calc(-50% + ${x}%), calc(-50% + ${y}%)) scale(${scale}) rotate(${rotate}deg)`,
+              transformOrigin: "center",
+            }}
           />
         )}
       </div>
