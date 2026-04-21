@@ -475,9 +475,11 @@ export default function StudioCustomizePage() {
             </button>
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-gold px-4 py-2 text-xs font-semibold tracking-wide text-[hsl(var(--ink))] shadow-glow transition-luxe hover:scale-[1.02]"
+              onClick={handleExport}
+              disabled={exporting}
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-gold px-4 py-2 text-xs font-semibold tracking-wide text-[hsl(var(--ink))] shadow-glow transition-luxe hover:scale-[1.02] disabled:opacity-60"
             >
-              <Download className="h-3.5 w-3.5" /> Exporter
+              <Download className="h-3.5 w-3.5" /> {exporting ? "Export…" : "Exporter PNG"}
             </button>
           </div>
         </div>
