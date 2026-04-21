@@ -992,7 +992,25 @@ export default function StudioCustomizePage() {
                   </div>
                 </div>
 
-                <div className="mt-2 border-t border-border/60 pt-3">
+                <div className="mt-3 border-t border-border/60 pt-3">
+                  <p className="mb-2 text-[10px] uppercase tracking-widest text-gold/80">Couleur des textes</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <ColorField label="Titre" value={state.titleColor} fallback="#FFFFFF" onChange={(v) => set({ titleColor: v })} />
+                    <ColorField label="Sous-titre" value={state.subtitleColor} fallback={activeAccent.color} onChange={(v) => set({ subtitleColor: v })} />
+                    <ColorField label="Badge" value={state.badgeColor} fallback={activeAccent.color} onChange={(v) => set({ badgeColor: v })} />
+                  </div>
+                  <div className="mt-2">
+                    <ColorField label="Texte du badge" value={state.badgeTextColor} fallback="#1a1208" onChange={(v) => set({ badgeTextColor: v })} />
+                  </div>
+                </div>
+
+                <div className="mt-3 border-t border-border/60 pt-3">
+                  <p className="mb-2 text-[10px] uppercase tracking-widest text-gold/80">Sous-titre</p>
+                  <Slider label="Taille" value={state.subtitleSize} min={8} max={28} onChange={(v) => set({ subtitleSize: v })} unit="px" />
+                  <Slider label="Espacement" value={state.subtitleTracking} min={0} max={60} onChange={(v) => set({ subtitleTracking: v })} />
+                </div>
+
+                <div className="mt-3 border-t border-border/60 pt-3">
                   <p className="mb-2 text-[10px] uppercase tracking-widest text-gold/80">Position du texte</p>
                   <Slider label="Décalage X" value={state.textX} min={-50} max={50} onChange={(v) => set({ textX: v })} unit="%" />
                   <Slider label="Décalage Y" value={state.textY} min={-50} max={50} onChange={(v) => set({ textY: v })} unit="%" />
