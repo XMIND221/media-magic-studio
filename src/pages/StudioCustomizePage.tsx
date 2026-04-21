@@ -300,7 +300,14 @@ export default function StudioCustomizePage() {
     logoBlend: "normal",
     textX: 0,
     textY: 0,
+    titleColor: "#FFFFFF",
+    subtitleSize: 11,
+    subtitleColor: "",
+    subtitleTracking: 35,
+    badgeColor: "",
+    badgeTextColor: "",
     overlayIntensity: 100,
+    compareMode: "off",
   }), [product]);
 
   const [state, dispatch] = useReducer(reducer, initial);
