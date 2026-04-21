@@ -11,48 +11,129 @@ import { MediaThumbnail } from "@/components/marketplace/MediaThumbnail";
 import { cn } from "@/lib/utils";
 
 const FORMATS = [
-  { id: "story",    label: "Story 9:16",   ratio: "9/16" },
-  { id: "post",     label: "Post 4:5",     ratio: "4/5"  },
-  { id: "carré",    label: "Square 1:1",   ratio: "1/1"  },
-  { id: "paysage",  label: "Landscape",    ratio: "16/9" },
-  { id: "portrait", label: "Portrait 3:4", ratio: "3/4"  },
-  { id: "banner",   label: "Banner 21:9",  ratio: "21/9" },
+  { id: "story",      label: "Story 9:16",      ratio: "9/16"  },
+  { id: "reel",       label: "Reel 9:16",       ratio: "9/16"  },
+  { id: "post",       label: "Post 4:5",        ratio: "4/5"   },
+  { id: "carré",      label: "Square 1:1",      ratio: "1/1"   },
+  { id: "paysage",    label: "Landscape 16:9",  ratio: "16/9"  },
+  { id: "portrait",   label: "Portrait 3:4",    ratio: "3/4"   },
+  { id: "banner",     label: "Banner 21:9",     ratio: "21/9"  },
+  { id: "ultrawide",  label: "Cinéma 2.39",     ratio: "239/100" },
+  { id: "yt-thumb",   label: "YouTube 16:9",    ratio: "16/9"  },
+  { id: "yt-banner",  label: "YT Banner 6.2:1", ratio: "62/10" },
+  { id: "linkedin",   label: "LinkedIn 1.91:1", ratio: "191/100" },
+  { id: "pinterest",  label: "Pinterest 2:3",   ratio: "2/3"   },
+  { id: "a4",         label: "Print A4",        ratio: "210/297" },
+  { id: "ticket",     label: "Ticket 5:2",      ratio: "5/2"   },
+  { id: "card",       label: "Card 85:55",      ratio: "85/55" },
+  { id: "vertical",   label: "Vertical 2:5",    ratio: "2/5"   },
 ];
 
+// 24 palettes — couleurs, dégradés, mesh, motifs, textures (pas que des couleurs)
 const PALETTES = [
-  { id: "gold",    label: "Luxury Gold",      from: "hsl(43 80% 55%)",  to: "hsl(38 65% 38%)" },
-  { id: "noir",    label: "Pure Noir",        from: "hsl(30 14% 9%)",   to: "hsl(30 14% 4%)"  },
-  { id: "neon",    label: "Neon Pop",         from: "hsl(310 100% 60%)",to: "hsl(190 100% 55%)" },
-  { id: "ocean",   label: "Cinematic Blue",   from: "hsl(220 70% 35%)", to: "hsl(260 60% 25%)" },
-  { id: "fire",    label: "Sunset Fire",      from: "hsl(20 90% 55%)",  to: "hsl(0 80% 40%)"   },
-  { id: "mint",    label: "Editorial Mint",   from: "hsl(160 50% 45%)", to: "hsl(180 40% 20%)" },
-  { id: "ivory",   label: "Ivory Editorial",  from: "hsl(40 30% 92%)",  to: "hsl(35 20% 78%)"  },
-  { id: "berry",   label: "Berry Velvet",     from: "hsl(330 60% 35%)", to: "hsl(290 50% 18%)" },
+  // Color gradients
+  { id: "gold",     label: "Luxury Gold",     kind: "gradient", from: "hsl(43 80% 55%)",  to: "hsl(38 65% 38%)" },
+  { id: "noir",     label: "Pure Noir",       kind: "gradient", from: "hsl(30 14% 9%)",   to: "hsl(30 14% 4%)"  },
+  { id: "neon",     label: "Neon Pop",        kind: "gradient", from: "hsl(310 100% 60%)",to: "hsl(190 100% 55%)" },
+  { id: "ocean",    label: "Cinematic Blue",  kind: "gradient", from: "hsl(220 70% 35%)", to: "hsl(260 60% 25%)" },
+  { id: "fire",     label: "Sunset Fire",     kind: "gradient", from: "hsl(20 90% 55%)",  to: "hsl(0 80% 40%)"   },
+  { id: "mint",     label: "Editorial Mint",  kind: "gradient", from: "hsl(160 50% 45%)", to: "hsl(180 40% 20%)" },
+  { id: "ivory",    label: "Ivory Editorial", kind: "gradient", from: "hsl(40 30% 92%)",  to: "hsl(35 20% 78%)"  },
+  { id: "berry",    label: "Berry Velvet",    kind: "gradient", from: "hsl(330 60% 35%)", to: "hsl(290 50% 18%)" },
+  { id: "forest",   label: "Forest Deep",     kind: "gradient", from: "hsl(150 40% 22%)", to: "hsl(120 30% 8%)"  },
+  { id: "rose",     label: "Rose Champagne",  kind: "gradient", from: "hsl(15 60% 75%)",  to: "hsl(340 40% 50%)" },
+  { id: "midnight", label: "Midnight Indigo", kind: "gradient", from: "hsl(245 60% 25%)", to: "hsl(260 55% 8%)"  },
+  { id: "copper",   label: "Copper Patina",   kind: "gradient", from: "hsl(18 60% 45%)",  to: "hsl(170 30% 25%)" },
+  // Mesh / radial
+  { id: "mesh-aurora",  label: "Mesh Aurora",   kind: "mesh",
+    css: "radial-gradient(60% 60% at 20% 20%, hsl(280 80% 55% / .9), transparent 60%), radial-gradient(60% 60% at 80% 80%, hsl(190 90% 55% / .8), transparent 60%), linear-gradient(135deg,#0a0612,#1a0b2e)" },
+  { id: "mesh-sunset",  label: "Mesh Sunset",   kind: "mesh",
+    css: "radial-gradient(60% 60% at 30% 70%, hsl(0 90% 60% / .85), transparent 60%), radial-gradient(60% 60% at 70% 30%, hsl(35 95% 60% / .75), transparent 60%), linear-gradient(180deg,#1a0908,#0a0306)" },
+  { id: "mesh-mint",    label: "Mesh Mint",     kind: "mesh",
+    css: "radial-gradient(60% 60% at 25% 30%, hsl(160 70% 55% / .85), transparent 60%), radial-gradient(60% 60% at 75% 75%, hsl(200 70% 55% / .7), transparent 60%), linear-gradient(135deg,#04130f,#020807)" },
+  { id: "mesh-rose",    label: "Mesh Rose",     kind: "mesh",
+    css: "radial-gradient(60% 60% at 30% 30%, hsl(330 80% 65% / .8), transparent 60%), radial-gradient(60% 60% at 80% 70%, hsl(280 70% 55% / .7), transparent 60%), linear-gradient(135deg,#180616,#08020a)" },
+  // Textures / motifs (non-colored or pattern-based)
+  { id: "tex-paper",    label: "Paper Ivory",   kind: "texture",
+    css: "repeating-linear-gradient(45deg, hsl(40 20% 90%) 0 2px, hsl(40 18% 86%) 2px 4px), linear-gradient(180deg,#efe7d4,#dccbb0)" },
+  { id: "tex-marble",   label: "Marbre Noir",   kind: "texture",
+    css: "radial-gradient(80% 60% at 30% 20%, hsl(0 0% 18% / .8), transparent 60%), radial-gradient(60% 50% at 70% 80%, hsl(0 0% 25% / .7), transparent 60%), linear-gradient(135deg,#0a0a0a,#1a1a1a)" },
+  { id: "tex-marble-w", label: "Marbre Blanc",  kind: "texture",
+    css: "radial-gradient(80% 60% at 30% 20%, hsl(40 10% 92% / .9), transparent 60%), radial-gradient(60% 50% at 70% 80%, hsl(40 5% 80% / .7), transparent 60%), linear-gradient(135deg,#f0ece4,#d8d2c4)" },
+  { id: "tex-grid",     label: "Grille Or",     kind: "texture",
+    css: "linear-gradient(hsl(43 70% 55% / .12) 1px,transparent 1px), linear-gradient(90deg,hsl(43 70% 55% / .12) 1px,transparent 1px), linear-gradient(135deg,#0c0a06,#050403) 0 0/100% 100%, #0a0805" },
+  { id: "tex-stripes",  label: "Rayures",       kind: "texture",
+    css: "repeating-linear-gradient(135deg, hsl(0 0% 8%) 0 18px, hsl(0 0% 12%) 18px 36px)" },
+  { id: "tex-noise",    label: "Grain Noir",    kind: "texture",
+    css: "radial-gradient(circle at 1px 1px,hsl(0 0% 100% / .06) 1px,transparent 0) 0 0/3px 3px, linear-gradient(135deg,#0a0a0a,#050505)" },
+  { id: "tex-velvet",   label: "Velours",       kind: "texture",
+    css: "radial-gradient(120% 90% at 50% 50%, hsl(280 30% 25%), hsl(280 40% 8%))" },
+  { id: "tex-sand",     label: "Sable Doré",    kind: "texture",
+    css: "radial-gradient(circle at 30% 30%, hsl(35 50% 75% / .9), transparent 60%), linear-gradient(180deg,#3d2c14,#1a1106)" },
 ];
 
+// 16 accents
 const ACCENTS = [
-  { id: "gold",   color: "hsl(43 80% 55%)",  label: "Gold"   },
-  { id: "white",  color: "hsl(0 0% 100%)",   label: "Ivory"  },
-  { id: "rose",   color: "hsl(340 90% 65%)", label: "Rose"   },
-  { id: "cyan",   color: "hsl(190 90% 60%)", label: "Cyan"   },
-  { id: "lime",   color: "hsl(80 75% 60%)",  label: "Lime"   },
-  { id: "coral",  color: "hsl(15 85% 60%)",  label: "Coral"  },
+  { id: "gold",      color: "hsl(43 80% 55%)",  label: "Gold"     },
+  { id: "white",     color: "hsl(0 0% 100%)",   label: "Ivory"    },
+  { id: "rose",      color: "hsl(340 90% 65%)", label: "Rose"     },
+  { id: "cyan",      color: "hsl(190 90% 60%)", label: "Cyan"     },
+  { id: "lime",      color: "hsl(80 75% 60%)",  label: "Lime"     },
+  { id: "coral",     color: "hsl(15 85% 60%)",  label: "Coral"    },
+  { id: "violet",    color: "hsl(270 80% 65%)", label: "Violet"   },
+  { id: "magenta",   color: "hsl(310 90% 60%)", label: "Magenta"  },
+  { id: "emerald",   color: "hsl(150 70% 50%)", label: "Emerald"  },
+  { id: "amber",     color: "hsl(35 95% 55%)",  label: "Amber"    },
+  { id: "sky",       color: "hsl(210 90% 60%)", label: "Sky"      },
+  { id: "ruby",      color: "hsl(0 75% 55%)",   label: "Ruby"     },
+  { id: "pearl",     color: "hsl(40 20% 88%)",  label: "Pearl"    },
+  { id: "graphite",  color: "hsl(220 8% 35%)",  label: "Graphite" },
+  { id: "champagne", color: "hsl(38 50% 75%)",  label: "Champagne"},
+  { id: "obsidian",  color: "hsl(240 10% 12%)", label: "Obsidian" },
 ];
 
+// 14 typographies
 const FONT_PAIRS = [
-  { id: "luxe",  label: "Cormorant + Inter",   display: '"Cormorant Garamond", serif' },
-  { id: "bold",  label: "Display Bold",         display: '"Cormorant Garamond", serif' },
-  { id: "edit",  label: "Editorial Serif",      display: 'Georgia, "Times New Roman", serif' },
-  { id: "tech",  label: "Modern Sans",          display: '"Inter", system-ui, sans-serif' },
+  { id: "luxe",     label: "Cormorant Garamond",   display: '"Cormorant Garamond", serif' },
+  { id: "playfair", label: "Playfair Display",     display: '"Playfair Display", Georgia, serif' },
+  { id: "bodoni",   label: "Bodoni Moda",          display: '"Bodoni Moda", "Didot", serif' },
+  { id: "didot",    label: "Didot Editorial",      display: '"Didot", "Bodoni Moda", serif' },
+  { id: "cinzel",   label: "Cinzel Roman",         display: '"Cinzel", "Trajan Pro", serif' },
+  { id: "marcell",  label: "Marcellus Classic",    display: '"Marcellus", serif' },
+  { id: "italiana", label: "Italiana Couture",     display: '"Italiana", serif' },
+  { id: "fraunces", label: "Fraunces Modern",      display: '"Fraunces", serif' },
+  { id: "edit",     label: "Georgia Editorial",    display: 'Georgia, "Times New Roman", serif' },
+  { id: "inter",    label: "Inter Sans",           display: '"Inter", system-ui, sans-serif' },
+  { id: "manrope",  label: "Manrope Modern",       display: '"Manrope", sans-serif' },
+  { id: "space",    label: "Space Grotesk",        display: '"Space Grotesk", sans-serif' },
+  { id: "mono",     label: "JetBrains Mono",       display: '"JetBrains Mono", "Courier New", monospace' },
+  { id: "syne",     label: "Syne Display",         display: '"Syne", sans-serif' },
 ];
 
+// 18 overlays / textures
 const OVERLAYS = [
-  { id: "none",   label: "Aucun" },
-  { id: "grain",  label: "Grain" },
-  { id: "scan",   label: "Scanlines" },
-  { id: "leak",   label: "Light leak" },
-  { id: "vignette", label: "Vignette" },
+  { id: "none",       label: "Aucun" },
+  { id: "grain",      label: "Grain" },
+  { id: "scan",       label: "Scanlines" },
+  { id: "leak",       label: "Light leak" },
+  { id: "vignette",   label: "Vignette" },
+  { id: "grid",       label: "Grille Or" },
+  { id: "shimmer",    label: "Or Shimmer" },
+  { id: "vinyl",      label: "Vinyle" },
+  { id: "spotlight",  label: "Spotlight" },
+  { id: "orbs",       label: "Orbes" },
+  { id: "neon",       label: "Néon" },
+  { id: "halftone",   label: "Halftone" },
+  { id: "stripes",    label: "Rayures" },
+  { id: "diagonal",   label: "Diagonale" },
+  { id: "crt",        label: "CRT TV" },
+  { id: "dust",       label: "Poussière" },
+  { id: "bokeh",      label: "Bokeh" },
+  { id: "duotone",    label: "Duotone" },
 ];
+
+// 10 variantes (A → J) — différences plus marquées via offset de seed
+const VARIANTS = ["v1","v2","v3","v4","v5","v6","v7","v8","v9","v10"];
 
 interface State {
   title: string;
@@ -226,9 +307,9 @@ export default function StudioCustomizePage() {
 
       <div className="container mx-auto grid gap-6 px-4 py-6 lg:grid-cols-[1fr_400px]">
         {/* Preview */}
-        <section className="order-1 lg:sticky lg:top-20 lg:self-start">
+        <section className="order-1 lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto scrollbar-hide">
           <div className="rounded-3xl border border-border/60 bg-gradient-noir p-4 sm:p-8">
-            <div className="mx-auto" style={{ maxWidth: state.format === "banner" || state.format === "paysage" ? 640 : 420 }}>
+            <div className="mx-auto" style={{ maxWidth: ["banner","paysage","ultrawide","yt-banner","linkedin","ticket"].includes(state.format) ? 640 : 380 }}>
               <div
                 key={`${state.format}-${state.palette}-${state.variantSeed}`}
                 className={cn(
@@ -239,7 +320,9 @@ export default function StudioCustomizePage() {
                   aspectRatio: activeFormat.ratio,
                   borderRadius: state.rounded,
                   background: state.showBackground
-                    ? `linear-gradient(135deg, ${activePalette.from}, ${activePalette.to})`
+                    ? (activePalette.kind === "gradient" || !activePalette.kind
+                        ? `linear-gradient(135deg, ${activePalette.from}, ${activePalette.to})`
+                        : activePalette.css)
                     : "transparent",
                 }}
               >
@@ -253,8 +336,8 @@ export default function StudioCustomizePage() {
                 >
                   {state.showBackground && (
                     isMedia
-                      ? <MediaThumbnail product={{ ...product, title: state.title }} variantSeed={state.variantSeed + state.palette + state.accent} />
-                      : <ProductThumbnail product={{ ...product, title: state.title }} variantSeed={state.variantSeed + state.palette + state.accent} />
+                      ? <MediaThumbnail product={{ ...product, title: state.title }} variantSeed={`${state.variantSeed}-${state.variantSeed.repeat(3)}-${state.palette}-${state.accent}-${state.font}`} />
+                      : <ProductThumbnail product={{ ...product, title: state.title }} variantSeed={`${state.variantSeed}-${state.variantSeed.repeat(3)}-${state.palette}-${state.accent}-${state.font}`} />
                   )}
                 </div>
 
@@ -302,11 +385,34 @@ export default function StudioCustomizePage() {
                   <div
                     className={cn(
                       "pointer-events-none absolute inset-0",
-                      state.overlay === "grain" && "mt-noise opacity-30",
-                      state.overlay === "scan" && "mt-scanlines opacity-25",
-                      state.overlay === "leak" && "mt-light-leak",
-                      state.overlay === "vignette" && "mt-vignette",
+                      state.overlay === "grain"     && "mt-noise opacity-40",
+                      state.overlay === "scan"      && "mt-scanlines opacity-30",
+                      state.overlay === "leak"      && "mt-light-leak",
+                      state.overlay === "vignette"  && "mt-vignette",
+                      state.overlay === "grid"      && "mt-grid-soft opacity-60",
+                      state.overlay === "shimmer"   && "mt-gold-shimmer",
+                      state.overlay === "vinyl"     && "mt-vinyl opacity-40",
+                      state.overlay === "spotlight" && "mt-spotlight",
+                      state.overlay === "orbs"      && "mt-orbs",
+                      state.overlay === "neon"      && "mt-neon-bg",
                     )}
+                    style={
+                      state.overlay === "halftone"
+                        ? { backgroundImage: "radial-gradient(hsl(0 0% 0% / .55) 1.2px, transparent 1.4px)", backgroundSize: "5px 5px" }
+                        : state.overlay === "stripes"
+                        ? { backgroundImage: "repeating-linear-gradient(90deg, hsl(0 0% 0% / .35) 0 6px, transparent 6px 12px)" }
+                        : state.overlay === "diagonal"
+                        ? { backgroundImage: "repeating-linear-gradient(45deg, hsl(43 70% 55% / .12) 0 8px, transparent 8px 18px)" }
+                        : state.overlay === "crt"
+                        ? { backgroundImage: "repeating-linear-gradient(0deg, hsl(0 0% 0% / .25) 0 2px, transparent 2px 4px), radial-gradient(120% 80% at 50% 50%, transparent 60%, hsl(0 0% 0% / .55))" }
+                        : state.overlay === "dust"
+                        ? { backgroundImage: "radial-gradient(circle at 20% 30%, hsl(0 0% 100% / .15) 1px, transparent 2px), radial-gradient(circle at 70% 80%, hsl(0 0% 100% / .12) 1px, transparent 2px), radial-gradient(circle at 40% 70%, hsl(0 0% 100% / .10) 1px, transparent 2px)", backgroundSize: "120px 120px, 90px 90px, 150px 150px" }
+                        : state.overlay === "bokeh"
+                        ? { backgroundImage: "radial-gradient(circle at 20% 30%, hsl(43 80% 60% / .35) 0, transparent 14px), radial-gradient(circle at 70% 60%, hsl(310 70% 60% / .3) 0, transparent 18px), radial-gradient(circle at 50% 80%, hsl(190 80% 60% / .3) 0, transparent 22px)" }
+                        : state.overlay === "duotone"
+                        ? { background: "linear-gradient(135deg, hsl(43 80% 55% / .35), hsl(280 70% 50% / .35))", mixBlendMode: "color" }
+                        : undefined
+                    }
                   />
                 )}
 
@@ -455,7 +561,15 @@ export default function StudioCustomizePage() {
                         state.palette === p.id ? "border-gold ring-1 ring-gold/40" : "border-border hover:border-gold/40"
                       )}
                     >
-                      <div className="h-10 w-full" style={{ background: `linear-gradient(135deg, ${p.from}, ${p.to})` }} />
+                      <div
+                        className="h-10 w-full"
+                        style={{
+                          background: p.kind === "gradient" || !p.kind
+                            ? `linear-gradient(135deg, ${p.from}, ${p.to})`
+                            : p.css,
+                          backgroundSize: "cover",
+                        }}
+                      />
                       <span className="bg-card px-1.5 py-1 text-foreground/80">
                         {state.palette === p.id && <Check className="mr-1 inline h-2.5 w-2.5 text-gold" />}
                         {p.label}
@@ -492,7 +606,7 @@ export default function StudioCustomizePage() {
 
               <Section icon={<Sparkles className="h-3.5 w-3.5" />} label="Variantes">
                 <div className="flex flex-wrap gap-2">
-                  {["v1","v2","v3","v4","v5","v6","v7","v8"].map((v) => (
+                  {VARIANTS.map((v) => (
                     <button
                       key={v}
                       type="button"
@@ -722,7 +836,7 @@ export default function StudioCustomizePage() {
               </Section>
 
               <Section icon={<Wand2 className="h-3.5 w-3.5" />} label="Texture / Overlay">
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   {OVERLAYS.map((o) => (
                     <button
                       key={o.id}
