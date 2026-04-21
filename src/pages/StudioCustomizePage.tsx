@@ -401,27 +401,22 @@ export default function StudioCustomizePage() {
                   )}
                 </div>
 
-                {/* User-uploaded background image — sits above template, below overlays + text */}
+                {/* User-uploaded background image — drag to move, sits above template, below overlays + text */}
                 {state.userImage && (
-                  <div
-                    className="pointer-events-none absolute inset-0 z-10 overflow-hidden"
-                    style={{ opacity: state.imageOpacity / 100, mixBlendMode: state.imageBlend }}
-                  >
-                    <img
-                      src={state.userImage}
-                      alt="Visuel utilisateur"
-                      className="absolute left-1/2 top-1/2 h-full w-full max-w-none -translate-x-1/2 -translate-y-1/2 select-none"
-                      style={{
-                        objectFit: state.imageMode,
-                        transform: `translate(calc(-50% + ${state.imageX}%), calc(-50% + ${state.imageY}%)) scale(${state.imageScale / 100})`,
-                        transformOrigin: "center",
-                      }}
-                      draggable={false}
-                    />
-                  </div>
+                  <DraggableImageLayer
+                    src={state.userImage}
+                    mode={state.imageMode}
+                    scale={state.imageScale}
+                    x={state.imageX}
+                    y={state.imageY}
+                    rotate={state.imageRotate}
+                    opacity={state.imageOpacity}
+                    blend={state.imageBlend}
+                    onMove={(x, y) => set({ imageX: x, imageY: y })}
+                  />
                 )}
 
-                {/* User logo overlay — preserves aspect ratio (height auto) */}
+                {/* User logo overlay — supports blend modes + preserves aspect ratio */}
                 {state.userLogo && (
                   <img
                     src={state.userLogo}
@@ -438,6 +433,7 @@ export default function StudioCustomizePage() {
                       height: "auto",
                       maxHeight: state.logoSize,
                       opacity: state.logoOpacity / 100,
+                      mixBlendMode: state.logoBlend,
                     }}
                     draggable={false}
                   />
