@@ -832,11 +832,11 @@ export default function StudioCustomizePage() {
                     <Slider label="Position Y" value={state.imageY} min={-100} max={100} onChange={(v) => set({ imageY: v })} unit="%" />
                     <Slider label="Opacité" value={state.imageOpacity} min={0} max={100} onChange={(v) => set({ imageOpacity: v })} unit="%" />
 
-                    <Field label="Mode de fusion">
-                      <BlendPresetGrid
+                    <Field label="Style de fusion (look)">
+                      <BlendLookGrid
                         src={state.userImage}
                         value={state.imageBlend}
-                        options={["normal","multiply","screen","overlay","soft-light","luminosity","color","darken","lighten","difference"]}
+                        kind="photo"
                         onChange={(b) => set({ imageBlend: b as State["imageBlend"] })}
                       />
                     </Field>
