@@ -258,6 +258,45 @@ export default function StudioCustomizePage() {
                   )}
                 </div>
 
+                {/* User-uploaded background image */}
+                {state.userImage && (
+                  <img
+                    src={state.userImage}
+                    alt="Visuel utilisateur"
+                    className="pointer-events-none absolute inset-0 h-full w-full select-none"
+                    style={{
+                      objectFit: state.imageMode,
+                      transform: `translate(${state.imageX}%, ${state.imageY}%) scale(${state.imageScale / 100})`,
+                      transformOrigin: "center",
+                      opacity: state.imageOpacity / 100,
+                      mixBlendMode: state.imageBlend,
+                      filter: filterCss,
+                    }}
+                    draggable={false}
+                  />
+                )}
+
+                {/* User logo overlay */}
+                {state.userLogo && (
+                  <img
+                    src={state.userLogo}
+                    alt="Logo utilisateur"
+                    className={cn(
+                      "pointer-events-none absolute select-none object-contain",
+                      state.logoCorner === "tl" && "left-3 top-3",
+                      state.logoCorner === "tr" && "right-3 top-3",
+                      state.logoCorner === "bl" && "left-3 bottom-3",
+                      state.logoCorner === "br" && "right-3 bottom-3",
+                    )}
+                    style={{
+                      width: state.logoSize,
+                      height: state.logoSize,
+                      opacity: state.logoOpacity / 100,
+                    }}
+                    draggable={false}
+                  />
+                )}
+
                 {/* Overlay */}
                 {state.overlay !== "none" && (
                   <div
