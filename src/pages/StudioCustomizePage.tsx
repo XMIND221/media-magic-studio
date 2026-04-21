@@ -132,8 +132,48 @@ const OVERLAYS = [
   { id: "duotone",    label: "Duotone" },
 ];
 
-// 10 variantes (A → J) — différences plus marquées via offset de seed
-const VARIANTS = ["v1","v2","v3","v4","v5","v6","v7","v8","v9","v10"];
+// 10 variantes — différences MARQUÉES (layout, contraste, échelle, overlay, blend)
+// Chaque variante applique un profil distinct par-dessus l'état utilisateur.
+const VARIANTS = ["v1","v2","v3","v4","v5","v6","v7","v8","v9","v10"] as const;
+type VariantId = typeof VARIANTS[number];
+
+interface VariantProfile {
+  label: string;
+  // visual transforms applied to the template visual layer
+  rotate: number;          // deg
+  scale: number;           // 0.85..1.25
+  translateX: number;      // %
+  translateY: number;      // %
+  // tone overrides (multipliers applied on top of user values)
+  brightnessMul: number;
+  contrastMul: number;
+  saturationMul: number;
+  // text layout overrides
+  align: "left" | "center" | "right";
+  justify: "start" | "center" | "end";
+  padding: number;         // px
+  titleSizeMul: number;    // multiplier
+  uppercase: boolean | null;   // null = keep user
+  // visual flair
+  overlayHint: string | null;  // overrides overlay if set
+  blendOverlay: "normal" | "multiply" | "screen" | "overlay" | "soft-light" | "color-dodge" | "difference";
+  // background tint
+  tintHueShift: number;    // deg (rotates background hue via filter)
+  flip: boolean;
+}
+
+const VARIANT_PROFILES: Record<VariantId, VariantProfile> = {
+  v1:  { label: "Classique",   rotate: 0,    scale: 1.00, translateX: 0,  translateY: 0,  brightnessMul: 1.00, contrastMul: 1.00, saturationMul: 1.00, align: "left",   justify: "end",    padding: 20, titleSizeMul: 1.00, uppercase: null,  overlayHint: null,        blendOverlay: "normal",      tintHueShift: 0,    flip: false },
+  v2:  { label: "Centré airy", rotate: 0,    scale: 0.92, translateX: 0,  translateY: 0,  brightnessMul: 1.10, contrastMul: 0.92, saturationMul: 0.85, align: "center", justify: "center", padding: 32, titleSizeMul: 1.15, uppercase: false, overlayHint: "vignette",  blendOverlay: "soft-light",  tintHueShift: 0,    flip: false },
+  v3:  { label: "Editorial",   rotate: 0,    scale: 1.00, translateX: 0,  translateY: 0,  brightnessMul: 0.85, contrastMul: 1.25, saturationMul: 0.65, align: "left",   justify: "start",  padding: 24, titleSizeMul: 0.95, uppercase: true,  overlayHint: "grain",     blendOverlay: "normal",      tintHueShift: 0,    flip: false },
+  v4:  { label: "Cinéma",      rotate: 0,    scale: 1.10, translateX: 0,  translateY: 5,  brightnessMul: 0.75, contrastMul: 1.35, saturationMul: 1.10, align: "center", justify: "end",    padding: 28, titleSizeMul: 1.30, uppercase: true,  overlayHint: "leak",      blendOverlay: "screen",      tintHueShift: -10,  flip: false },
+  v5:  { label: "Néon Pop",    rotate: 0,    scale: 1.00, translateX: 0,  translateY: 0,  brightnessMul: 1.15, contrastMul: 1.20, saturationMul: 1.80, align: "center", justify: "center", padding: 18, titleSizeMul: 1.10, uppercase: true,  overlayHint: "neon",      blendOverlay: "color-dodge", tintHueShift: 35,   flip: false },
+  v6:  { label: "Asymétrique", rotate: -3,   scale: 1.05, translateX: -4, translateY: -2, brightnessMul: 1.00, contrastMul: 1.10, saturationMul: 1.00, align: "right",  justify: "start",  padding: 22, titleSizeMul: 1.05, uppercase: false, overlayHint: "diagonal",  blendOverlay: "overlay",     tintHueShift: 0,    flip: false },
+  v7:  { label: "Mono noir",   rotate: 0,    scale: 1.00, translateX: 0,  translateY: 0,  brightnessMul: 0.80, contrastMul: 1.40, saturationMul: 0.00, align: "left",   justify: "end",    padding: 20, titleSizeMul: 1.00, uppercase: true,  overlayHint: "grain",     blendOverlay: "multiply",    tintHueShift: 0,    flip: false },
+  v8:  { label: "Glow doré",   rotate: 0,    scale: 1.00, translateX: 0,  translateY: 0,  brightnessMul: 1.05, contrastMul: 1.05, saturationMul: 1.20, align: "center", justify: "center", padding: 24, titleSizeMul: 1.20, uppercase: false, overlayHint: "shimmer",   blendOverlay: "screen",      tintHueShift: 15,   flip: false },
+  v9:  { label: "Halftone",    rotate: 0,    scale: 1.00, translateX: 0,  translateY: 0,  brightnessMul: 0.95, contrastMul: 1.50, saturationMul: 0.40, align: "left",   justify: "start",  padding: 16, titleSizeMul: 0.90, uppercase: true,  overlayHint: "halftone",  blendOverlay: "multiply",    tintHueShift: 0,    flip: false },
+  v10: { label: "Mirroir",     rotate: 0,    scale: 1.08, translateX: 0,  translateY: 0,  brightnessMul: 1.00, contrastMul: 1.15, saturationMul: 1.10, align: "right",  justify: "end",    padding: 26, titleSizeMul: 1.10, uppercase: false, overlayHint: "spotlight", blendOverlay: "overlay",     tintHueShift: 0,    flip: true  },
+};
 
 interface State {
   title: string;
@@ -267,7 +307,20 @@ export default function StudioCustomizePage() {
   const isMedia = product.category === "media";
   const set = (patch: Partial<State>) => dispatch({ type: "set", patch });
 
-  const filterCss = `brightness(${state.brightness}%) contrast(${state.contrast}%) saturate(${state.saturation}%) blur(${state.blur}px)`;
+  const profile = VARIANT_PROFILES[state.variantSeed as VariantId] ?? VARIANT_PROFILES.v1;
+  // Effective values combining user state + variant profile
+  const effBrightness = Math.round(state.brightness * profile.brightnessMul);
+  const effContrast   = Math.round(state.contrast   * profile.contrastMul);
+  const effSaturation = Math.round(state.saturation * profile.saturationMul);
+  const effOverlay    = profile.overlayHint && state.overlay === "none" ? profile.overlayHint : state.overlay;
+  const effAlign      = profile.align;
+  const effJustify    = profile.justify;
+  const effPadding    = profile.padding;
+  const effTitleSize  = Math.round(state.titleSize * profile.titleSizeMul);
+  const effUppercase  = profile.uppercase ?? state.titleUppercase;
+  const filterCss     = `brightness(${effBrightness}%) contrast(${effContrast}%) saturate(${effSaturation}%) blur(${state.blur}px) hue-rotate(${profile.tintHueShift}deg)`;
+  // Variant seed for thumbnail engines: ONLY variant — never font/accent (font shouldn't change colors)
+  const thumbSeed = `${state.variantSeed}-${state.variantSeed.repeat(3)}-${state.palette}`;
 
   return (
     <div className="min-h-screen bg-background">
@@ -326,18 +379,21 @@ export default function StudioCustomizePage() {
                     : "transparent",
                 }}
               >
-                {/* Template visual */}
+                {/* Template visual — variant-driven transforms (scale/rotate/translate/flip + blend) */}
                 <div
                   className="absolute inset-0"
                   style={{
                     filter: filterCss,
                     opacity: state.paletteOpacity / 100,
+                    transform: `${profile.flip ? "scaleX(-1) " : ""}translate(${profile.translateX}%, ${profile.translateY}%) scale(${profile.scale}) rotate(${profile.rotate}deg)`,
+                    transformOrigin: "center",
+                    mixBlendMode: profile.blendOverlay,
                   }}
                 >
                   {state.showBackground && (
                     isMedia
-                      ? <MediaThumbnail product={{ ...product, title: state.title }} variantSeed={`${state.variantSeed}-${state.variantSeed.repeat(3)}-${state.palette}-${state.accent}-${state.font}`} />
-                      : <ProductThumbnail product={{ ...product, title: state.title }} variantSeed={`${state.variantSeed}-${state.variantSeed.repeat(3)}-${state.palette}-${state.accent}-${state.font}`} />
+                      ? <MediaThumbnail product={{ ...product, title: state.title }} variantSeed={thumbSeed} />
+                      : <ProductThumbnail product={{ ...product, title: state.title }} variantSeed={thumbSeed} />
                   )}
                 </div>
 
@@ -380,53 +436,58 @@ export default function StudioCustomizePage() {
                   />
                 )}
 
-                {/* Overlay */}
-                {state.overlay !== "none" && (
+                {/* Overlay (variant can force one when user has none) */}
+                {effOverlay !== "none" && (
                   <div
                     className={cn(
                       "pointer-events-none absolute inset-0",
-                      state.overlay === "grain"     && "mt-noise opacity-40",
-                      state.overlay === "scan"      && "mt-scanlines opacity-30",
-                      state.overlay === "leak"      && "mt-light-leak",
-                      state.overlay === "vignette"  && "mt-vignette",
-                      state.overlay === "grid"      && "mt-grid-soft opacity-60",
-                      state.overlay === "shimmer"   && "mt-gold-shimmer",
-                      state.overlay === "vinyl"     && "mt-vinyl opacity-40",
-                      state.overlay === "spotlight" && "mt-spotlight",
-                      state.overlay === "orbs"      && "mt-orbs",
-                      state.overlay === "neon"      && "mt-neon-bg",
+                      effOverlay === "grain"     && "mt-noise opacity-40",
+                      effOverlay === "scan"      && "mt-scanlines opacity-30",
+                      effOverlay === "leak"      && "mt-light-leak",
+                      effOverlay === "vignette"  && "mt-vignette",
+                      effOverlay === "grid"      && "mt-grid-soft opacity-60",
+                      effOverlay === "shimmer"   && "mt-gold-shimmer",
+                      effOverlay === "vinyl"     && "mt-vinyl opacity-40",
+                      effOverlay === "spotlight" && "mt-spotlight",
+                      effOverlay === "orbs"      && "mt-orbs",
+                      effOverlay === "neon"      && "mt-neon-bg",
                     )}
                     style={
-                      state.overlay === "halftone"
+                      effOverlay === "halftone"
                         ? { backgroundImage: "radial-gradient(hsl(0 0% 0% / .55) 1.2px, transparent 1.4px)", backgroundSize: "5px 5px" }
-                        : state.overlay === "stripes"
+                        : effOverlay === "stripes"
                         ? { backgroundImage: "repeating-linear-gradient(90deg, hsl(0 0% 0% / .35) 0 6px, transparent 6px 12px)" }
-                        : state.overlay === "diagonal"
+                        : effOverlay === "diagonal"
                         ? { backgroundImage: "repeating-linear-gradient(45deg, hsl(43 70% 55% / .12) 0 8px, transparent 8px 18px)" }
-                        : state.overlay === "crt"
+                        : effOverlay === "crt"
                         ? { backgroundImage: "repeating-linear-gradient(0deg, hsl(0 0% 0% / .25) 0 2px, transparent 2px 4px), radial-gradient(120% 80% at 50% 50%, transparent 60%, hsl(0 0% 0% / .55))" }
-                        : state.overlay === "dust"
+                        : effOverlay === "dust"
                         ? { backgroundImage: "radial-gradient(circle at 20% 30%, hsl(0 0% 100% / .15) 1px, transparent 2px), radial-gradient(circle at 70% 80%, hsl(0 0% 100% / .12) 1px, transparent 2px), radial-gradient(circle at 40% 70%, hsl(0 0% 100% / .10) 1px, transparent 2px)", backgroundSize: "120px 120px, 90px 90px, 150px 150px" }
-                        : state.overlay === "bokeh"
+                        : effOverlay === "bokeh"
                         ? { backgroundImage: "radial-gradient(circle at 20% 30%, hsl(43 80% 60% / .35) 0, transparent 14px), radial-gradient(circle at 70% 60%, hsl(310 70% 60% / .3) 0, transparent 18px), radial-gradient(circle at 50% 80%, hsl(190 80% 60% / .3) 0, transparent 22px)" }
-                        : state.overlay === "duotone"
+                        : effOverlay === "duotone"
                         ? { background: "linear-gradient(135deg, hsl(43 80% 55% / .35), hsl(280 70% 50% / .35))", mixBlendMode: "color" }
                         : undefined
                     }
                   />
                 )}
 
-                {/* Custom text layer (overlays the template) */}
+                {/* Custom text layer (variant overrides align/justify/padding/title size) */}
                 <div
-                  className="pointer-events-none absolute inset-0 flex flex-col justify-end p-5"
-                  style={{ textAlign: state.titleAlign }}
+                  className={cn(
+                    "pointer-events-none absolute inset-0 flex flex-col",
+                    effJustify === "start"  && "justify-start",
+                    effJustify === "center" && "justify-center",
+                    effJustify === "end"    && "justify-end",
+                  )}
+                  style={{ textAlign: effAlign, padding: effPadding }}
                 >
                   {state.showLogo && (
                     <div
                       className={cn(
                         "mb-auto inline-flex w-fit items-center gap-1.5 rounded-md px-2 py-1 text-[10px] font-semibold tracking-[0.3em]",
-                        state.titleAlign === "center" && "mx-auto",
-                        state.titleAlign === "right" && "ml-auto",
+                        effAlign === "center" && "mx-auto",
+                        effAlign === "right" && "ml-auto",
                       )}
                       style={{ background: "hsl(0 0% 0% / 0.35)", color: activeAccent.color, backdropFilter: "blur(8px)" }}
                     >
@@ -441,8 +502,8 @@ export default function StudioCustomizePage() {
                     <span
                       className={cn(
                         "mb-2 inline-block w-fit rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest",
-                        state.titleAlign === "center" && "mx-auto",
-                        state.titleAlign === "right" && "ml-auto",
+                        effAlign === "center" && "mx-auto",
+                        effAlign === "right" && "ml-auto",
                       )}
                       style={{ background: activeAccent.color, color: "hsl(var(--ink))" }}
                     >
@@ -454,10 +515,10 @@ export default function StudioCustomizePage() {
                       className="leading-tight text-white drop-shadow-md"
                       style={{
                         fontFamily: activeFont.display,
-                        fontSize: state.titleSize,
+                        fontSize: effTitleSize,
                         fontWeight: state.titleWeight,
                         fontStyle: state.titleItalic ? "italic" : "normal",
-                        textTransform: state.titleUppercase ? "uppercase" : "none",
+                        textTransform: effUppercase ? "uppercase" : "none",
                       }}
                     >
                       {state.title || " "}
@@ -475,7 +536,7 @@ export default function StudioCustomizePage() {
               </div>
               <div className="mt-4 flex items-center justify-between text-[11px] text-muted-foreground">
                 <span className="uppercase tracking-[0.3em]">{activeFormat.label}</span>
-                <span>Variant {state.variantSeed}</span>
+                <span>Variant {state.variantSeed} · {profile.label}</span>
               </div>
             </div>
           </div>
@@ -605,22 +666,30 @@ export default function StudioCustomizePage() {
               </Section>
 
               <Section icon={<Sparkles className="h-3.5 w-3.5" />} label="Variantes">
-                <div className="flex flex-wrap gap-2">
-                  {VARIANTS.map((v) => (
-                    <button
-                      key={v}
-                      type="button"
-                      onClick={() => set({ variantSeed: v })}
-                      className={cn(
-                        "rounded-full border px-3 py-1 text-[11px] uppercase tracking-widest transition-luxe",
-                        state.variantSeed === v
-                          ? "border-gold bg-gradient-gold text-[hsl(var(--ink))]"
-                          : "border-border bg-card text-foreground/80 hover:border-gold/40"
-                      )}
-                    >
-                      {v}
-                    </button>
-                  ))}
+                <p className="mb-2 text-[10px] text-muted-foreground">
+                  Chaque variante change layout, contraste, échelle et overlay — pas seulement la couleur.
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {VARIANTS.map((v) => {
+                    const p = VARIANT_PROFILES[v];
+                    const active = state.variantSeed === v;
+                    return (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => set({ variantSeed: v })}
+                        className={cn(
+                          "flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left transition-luxe",
+                          active
+                            ? "border-gold bg-gold/10 text-gold"
+                            : "border-border bg-card text-foreground/80 hover:border-gold/40"
+                        )}
+                      >
+                        <span className="text-[11px] font-semibold uppercase tracking-widest">{v}</span>
+                        <span className="text-[10px] text-foreground/60">{p.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </Section>
             </>
