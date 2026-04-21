@@ -173,6 +173,9 @@ const VARIANT_PROFILES: Record<VariantId, VariantProfile> = {
   v8:  { label: "Glow doré",   rotate: 0,    scale: 1.00, translateX: 0,  translateY: 0,  brightnessMul: 1.05, contrastMul: 1.05, saturationMul: 1.20, align: "center", justify: "center", padding: 24, titleSizeMul: 1.20, uppercase: false, overlayHint: "shimmer",   blendOverlay: "screen",      tintHueShift: 15,   flip: false },
   v9:  { label: "Halftone",    rotate: 0,    scale: 1.00, translateX: 0,  translateY: 0,  brightnessMul: 0.95, contrastMul: 1.50, saturationMul: 0.40, align: "left",   justify: "start",  padding: 16, titleSizeMul: 0.90, uppercase: true,  overlayHint: "halftone",  blendOverlay: "multiply",    tintHueShift: 0,    flip: false },
   v10: { label: "Mirroir",     rotate: 0,    scale: 1.08, translateX: 0,  translateY: 0,  brightnessMul: 1.00, contrastMul: 1.15, saturationMul: 1.10, align: "right",  justify: "end",    padding: 26, titleSizeMul: 1.10, uppercase: false, overlayHint: "spotlight", blendOverlay: "overlay",     tintHueShift: 0,    flip: true  },
+  // ── Spécial inédit ──
+  v11: { label: "✦ Risograph", rotate: -1,   scale: 1.04, translateX: 2,  translateY: -3, brightnessMul: 1.10, contrastMul: 1.45, saturationMul: 1.60, align: "left",   justify: "end",    padding: 22, titleSizeMul: 1.05, uppercase: true,  overlayHint: "halftone",  blendOverlay: "difference",  tintHueShift: 60,   flip: false },
+  v12: { label: "✦ Aurora",    rotate: 0,    scale: 1.15, translateX: 0,  translateY: 0,  brightnessMul: 0.90, contrastMul: 1.30, saturationMul: 1.40, align: "center", justify: "center", padding: 36, titleSizeMul: 1.45, uppercase: false, overlayHint: "bokeh",     blendOverlay: "color-dodge", tintHueShift: -45,  flip: false },
 };
 
 interface State {
