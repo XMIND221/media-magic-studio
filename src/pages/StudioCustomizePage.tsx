@@ -1167,3 +1167,130 @@ function ImageUploader({
     </div>
   );
 }
+
+/* ----------- Live drag/crop image layer ----------- */
+
+function DraggableImageLayer({
+  src, mode, scale, x, y, rotate, opacity, blend, onMove,
+}: {
+  src: string;
+  mode: "cover" | "contain" | "fill";
+  scale: number;
+  x: number;
+  y: number;
+  rotate: number;
+  opacity: number;
+  blend: State["imageBlend"];
+  onMove: (x: number, y: number) => void;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dragging, setDragging] = useState(false);
+  const startRef = useRef<{ px: number; py: number; x: number; y: number } | null>(null);
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    setDragging(true);
+    startRef.current = { px: e.clientX, py: e.clientY, x, y };
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!dragging || !startRef.current || !containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const dxPct = ((e.clientX - startRef.current.px) / rect.width) * 100;
+    const dyPct = ((e.clientY - startRef.current.py) / rect.height) * 100;
+    const nx = Math.max(-100, Math.min(100, Math.round(startRef.current.x + dxPct)));
+    const ny = Math.max(-100, Math.min(100, Math.round(startRef.current.y + dyPct)));
+    onMove(nx, ny);
+  };
+  const onPointerUp = () => { setDragging(false); startRef.current = null; };
+
+  return (
+    <div
+      ref={containerRef}
+      className={cn("absolute inset-0 z-10 overflow-hidden touch-none", dragging ? "cursor-grabbing" : "cursor-grab")}
+      style={{ opacity: opacity / 100, mixBlendMode: blend }}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+    >
+      <img
+        src={src}
+        alt="Visuel utilisateur"
+        className="absolute left-1/2 top-1/2 h-full w-full max-w-none select-none"
+        style={{
+          objectFit: mode,
+          transform: `translate(calc(-50% + ${x}%), calc(-50% + ${y}%)) scale(${scale / 100}) rotate(${rotate}deg)`,
+          transformOrigin: "center",
+        }}
+        draggable={false}
+      />
+      {dragging && <div className="pointer-events-none absolute inset-0 ring-2 ring-gold/60" />}
+      <div className="pointer-events-none absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-[9px] font-medium uppercase tracking-widest text-white/90 backdrop-blur">
+        <Move className="h-2.5 w-2.5" /> Glisser
+      </div>
+    </div>
+  );
+}
+
+/* ----------- Blend mode preset grid ----------- */
+
+function BlendPresetGrid({
+  src, value, options, onChange, compact,
+}: {
+  src: string | null;
+  value: string;
+  options: string[];
+  onChange: (v: string) => void;
+  compact?: boolean;
+}) {
+  return (
+    <div className={cn("grid gap-1.5", compact ? "grid-cols-4" : "grid-cols-5")}>
+      {options.map((b) => {
+        const active = value === b;
+        return (
+          <button
+            key={b}
+            type="button"
+            onClick={() => onChange(b)}
+            title={b}
+            className={cn(
+              "group flex flex-col items-stretch overflow-hidden rounded-md border text-[9px] transition-luxe",
+              active ? "border-gold ring-1 ring-gold/40" : "border-border hover:border-gold/40"
+            )}
+          >
+            <div className="relative h-9 w-full bg-gradient-to-br from-[hsl(var(--gold))] to-[hsl(var(--surface-3))]">
+              {src && (
+                <img
+                  src={src}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover"
+                  style={{ mixBlendMode: b as React.CSSProperties["mixBlendMode"] }}
+                />
+              )}
+            </div>
+            <span className="truncate bg-card px-1 py-0.5 text-center text-foreground/80">{b}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function BeforeAfterTile({ src, blend, label }: { src: string | null; blend: string; label: string }) {
+  return (
+    <div className="overflow-hidden rounded-md border border-border/60">
+      <div className="relative aspect-square bg-gradient-to-br from-[hsl(var(--gold))] via-[hsl(var(--surface-2))] to-[hsl(var(--ink))]">
+        {src && (
+          <img
+            src={src}
+            alt={label}
+            className="absolute inset-0 h-full w-full object-contain p-2"
+            style={{ mixBlendMode: blend as React.CSSProperties["mixBlendMode"] }}
+          />
+        )}
+      </div>
+      <p className="bg-card px-1.5 py-0.5 text-center text-[9px] uppercase tracking-widest text-muted-foreground">{label}</p>
+    </div>
+  );
+}
