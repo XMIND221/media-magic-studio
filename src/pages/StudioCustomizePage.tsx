@@ -132,9 +132,9 @@ const OVERLAYS = [
   { id: "duotone",    label: "Duotone" },
 ];
 
-// 10 variantes — différences MARQUÉES (layout, contraste, échelle, overlay, blend)
-// Chaque variante applique un profil distinct par-dessus l'état utilisateur.
-const VARIANTS = ["v1","v2","v3","v4","v5","v6","v7","v8","v9","v10"] as const;
+// 12 variantes — différences MARQUÉES (layout, contraste, échelle, overlay, blend)
+// v11 & v12 = "spécial inédit" (effets rares, layouts audacieux)
+const VARIANTS = ["v1","v2","v3","v4","v5","v6","v7","v8","v9","v10","v11","v12"] as const;
 type VariantId = typeof VARIANTS[number];
 
 interface VariantProfile {
