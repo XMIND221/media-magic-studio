@@ -1792,6 +1792,7 @@ function toHex(input: string): string {
   return "#ffffff";
 }
 
+function BeforeAfterTile({
   src, blend, label, kind = "photo", crop,
 }: { src: string | null; blend: string; label: string; kind?: "photo" | "logo"; crop?: BeforeAfterCrop }) {
   const scale = (crop?.scale ?? 100) / 100;
