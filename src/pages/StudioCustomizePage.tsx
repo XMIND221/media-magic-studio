@@ -307,9 +307,9 @@ export default function StudioCustomizePage() {
 
       <div className="container mx-auto grid gap-6 px-4 py-6 lg:grid-cols-[1fr_400px]">
         {/* Preview */}
-        <section className="order-1 lg:sticky lg:top-20 lg:self-start">
+        <section className="order-1 lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto scrollbar-hide">
           <div className="rounded-3xl border border-border/60 bg-gradient-noir p-4 sm:p-8">
-            <div className="mx-auto" style={{ maxWidth: state.format === "banner" || state.format === "paysage" ? 640 : 420 }}>
+            <div className="mx-auto" style={{ maxWidth: ["banner","paysage","ultrawide","yt-banner","linkedin","ticket"].includes(state.format) ? 640 : 380 }}>
               <div
                 key={`${state.format}-${state.palette}-${state.variantSeed}`}
                 className={cn(
@@ -320,7 +320,9 @@ export default function StudioCustomizePage() {
                   aspectRatio: activeFormat.ratio,
                   borderRadius: state.rounded,
                   background: state.showBackground
-                    ? `linear-gradient(135deg, ${activePalette.from}, ${activePalette.to})`
+                    ? (activePalette.kind === "gradient" || !activePalette.kind
+                        ? `linear-gradient(135deg, ${activePalette.from}, ${activePalette.to})`
+                        : activePalette.css)
                     : "transparent",
                 }}
               >
