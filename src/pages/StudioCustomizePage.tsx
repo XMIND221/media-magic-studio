@@ -583,7 +583,7 @@ export default function StudioCustomizePage() {
 
               <Section icon={<Sparkles className="h-3.5 w-3.5" />} label="Variantes">
                 <div className="flex flex-wrap gap-2">
-                  {["v1","v2","v3","v4","v5","v6","v7","v8"].map((v) => (
+                  {VARIANTS.map((v) => (
                     <button
                       key={v}
                       type="button"
