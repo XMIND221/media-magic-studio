@@ -270,12 +270,14 @@ export default function StudioCustomizePage() {
     imageScale: 100,
     imageX: 0,
     imageY: 0,
+    imageRotate: 0,
     imageOpacity: 100,
     imageBlend: "normal",
     userLogo: null,
     logoSize: 56,
     logoOpacity: 100,
     logoCorner: "tl",
+    logoBlend: "normal",
   }), [product]);
 
   const [state, dispatch] = useReducer(reducer, initial);
