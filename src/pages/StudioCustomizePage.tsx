@@ -211,13 +211,15 @@ interface State {
   imageScale: number;           // 50-300 (%)
   imageX: number;               // -100..100 (%)
   imageY: number;               // -100..100 (%)
+  imageRotate: number;          // -180..180 (deg)
   imageOpacity: number;         // 0-100
-  imageBlend: "normal" | "multiply" | "screen" | "overlay" | "soft-light" | "luminosity";
+  imageBlend: "normal" | "multiply" | "screen" | "overlay" | "soft-light" | "luminosity" | "color" | "darken" | "lighten" | "difference";
   // User logo (small overlay image)
   userLogo: string | null;
   logoSize: number;             // 24-160 (px)
   logoOpacity: number;          // 0-100
   logoCorner: "tl" | "tr" | "bl" | "br";
+  logoBlend: "normal" | "multiply" | "screen" | "overlay" | "soft-light" | "luminosity" | "color-dodge" | "difference";
 }
 
 type Action =
