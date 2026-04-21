@@ -3,8 +3,9 @@ import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft, Check, Download, Sparkles, Type, Palette, Image as ImageIcon,
   Layers, Wand2, RotateCcw, Copy, Eye, EyeOff, AlignLeft, AlignCenter, AlignRight,
-  Bold, Italic, Sun, CircleDot, Save, Share2, Upload, Trash2, Move,
+  Bold, Italic, Sun, CircleDot, Save, Share2, Upload, Trash2, Move, Star,
 } from "lucide-react";
+import { useBlendFavorites } from "@/hooks/use-marketplace-storage";
 import { EVENA_MARKETPLACE_CATALOG } from "@/data/evenaMarketplaceCatalog";
 import { ProductThumbnail } from "@/components/marketplace/ProductThumbnail";
 import { MediaThumbnail } from "@/components/marketplace/MediaThumbnail";
@@ -132,9 +133,9 @@ const OVERLAYS = [
   { id: "duotone",    label: "Duotone" },
 ];
 
-// 10 variantes — différences MARQUÉES (layout, contraste, échelle, overlay, blend)
-// Chaque variante applique un profil distinct par-dessus l'état utilisateur.
-const VARIANTS = ["v1","v2","v3","v4","v5","v6","v7","v8","v9","v10"] as const;
+// 12 variantes — différences MARQUÉES (layout, contraste, échelle, overlay, blend)
+// v11 & v12 = "spécial inédit" (effets rares, layouts audacieux)
+const VARIANTS = ["v1","v2","v3","v4","v5","v6","v7","v8","v9","v10","v11","v12"] as const;
 type VariantId = typeof VARIANTS[number];
 
 interface VariantProfile {
@@ -173,6 +174,9 @@ const VARIANT_PROFILES: Record<VariantId, VariantProfile> = {
   v8:  { label: "Glow doré",   rotate: 0,    scale: 1.00, translateX: 0,  translateY: 0,  brightnessMul: 1.05, contrastMul: 1.05, saturationMul: 1.20, align: "center", justify: "center", padding: 24, titleSizeMul: 1.20, uppercase: false, overlayHint: "shimmer",   blendOverlay: "screen",      tintHueShift: 15,   flip: false },
   v9:  { label: "Halftone",    rotate: 0,    scale: 1.00, translateX: 0,  translateY: 0,  brightnessMul: 0.95, contrastMul: 1.50, saturationMul: 0.40, align: "left",   justify: "start",  padding: 16, titleSizeMul: 0.90, uppercase: true,  overlayHint: "halftone",  blendOverlay: "multiply",    tintHueShift: 0,    flip: false },
   v10: { label: "Mirroir",     rotate: 0,    scale: 1.08, translateX: 0,  translateY: 0,  brightnessMul: 1.00, contrastMul: 1.15, saturationMul: 1.10, align: "right",  justify: "end",    padding: 26, titleSizeMul: 1.10, uppercase: false, overlayHint: "spotlight", blendOverlay: "overlay",     tintHueShift: 0,    flip: true  },
+  // ── Spécial inédit ──
+  v11: { label: "✦ Risograph", rotate: -1,   scale: 1.04, translateX: 2,  translateY: -3, brightnessMul: 1.10, contrastMul: 1.45, saturationMul: 1.60, align: "left",   justify: "end",    padding: 22, titleSizeMul: 1.05, uppercase: true,  overlayHint: "halftone",  blendOverlay: "difference",  tintHueShift: 60,   flip: false },
+  v12: { label: "✦ Aurora",    rotate: 0,    scale: 1.15, translateX: 0,  translateY: 0,  brightnessMul: 0.90, contrastMul: 1.30, saturationMul: 1.40, align: "center", justify: "center", padding: 36, titleSizeMul: 1.45, uppercase: false, overlayHint: "bokeh",     blendOverlay: "color-dodge", tintHueShift: -45,  flip: false },
 };
 
 interface State {
@@ -219,7 +223,12 @@ interface State {
   logoSize: number;             // 24-160 (px)
   logoOpacity: number;          // 0-100
   logoCorner: "tl" | "tr" | "bl" | "br";
-  logoBlend: "normal" | "multiply" | "screen" | "overlay" | "soft-light" | "luminosity" | "color-dodge" | "difference";
+  logoBlend: "normal" | "multiply" | "screen" | "overlay" | "soft-light" | "luminosity" | "color-dodge" | "difference" | "exclusion" | "hue" | "saturation" | "lighten";
+  // Text positioning offset
+  textX: number;          // -50..50 (%)
+  textY: number;          // -50..50 (%)
+  // Overlay impact
+  overlayIntensity: number; // 0-200 (%)
 }
 
 type Action =
@@ -278,6 +287,9 @@ export default function StudioCustomizePage() {
     logoOpacity: 100,
     logoCorner: "tl",
     logoBlend: "normal",
+    textX: 0,
+    textY: 0,
+    overlayIntensity: 100,
   }), [product]);
 
   const [state, dispatch] = useReducer(reducer, initial);
@@ -439,43 +451,49 @@ export default function StudioCustomizePage() {
                   />
                 )}
 
-                {/* Overlay (variant can force one when user has none) */}
+                {/* Overlay (variant can force one when user has none) — intensity boosted */}
                 {effOverlay !== "none" && (
                   <div
                     className={cn(
                       "pointer-events-none absolute inset-0 z-20",
-                      effOverlay === "grain"     && "mt-noise opacity-40",
-                      effOverlay === "scan"      && "mt-scanlines opacity-30",
+                      effOverlay === "grain"     && "mt-noise",
+                      effOverlay === "scan"      && "mt-scanlines",
                       effOverlay === "leak"      && "mt-light-leak",
                       effOverlay === "vignette"  && "mt-vignette",
-                      effOverlay === "grid"      && "mt-grid-soft opacity-60",
+                      effOverlay === "grid"      && "mt-grid-soft",
                       effOverlay === "shimmer"   && "mt-gold-shimmer",
-                      effOverlay === "vinyl"     && "mt-vinyl opacity-40",
+                      effOverlay === "vinyl"     && "mt-vinyl",
                       effOverlay === "spotlight" && "mt-spotlight",
                       effOverlay === "orbs"      && "mt-orbs",
                       effOverlay === "neon"      && "mt-neon-bg",
                     )}
-                    style={
-                      effOverlay === "halftone"
-                        ? { backgroundImage: "radial-gradient(hsl(0 0% 0% / .55) 1.2px, transparent 1.4px)", backgroundSize: "5px 5px" }
+                    style={{
+                      opacity: state.overlayIntensity / 100,
+                      mixBlendMode:
+                        effOverlay === "duotone" ? "color"
+                        : effOverlay === "shimmer" || effOverlay === "leak" || effOverlay === "neon" || effOverlay === "spotlight" ? "screen"
+                        : effOverlay === "halftone" || effOverlay === "crt" || effOverlay === "vignette" ? "multiply"
+                        : "normal",
+                      ...(effOverlay === "halftone"
+                        ? { backgroundImage: "radial-gradient(hsl(0 0% 0% / .9) 1.6px, transparent 1.8px)", backgroundSize: "5px 5px" }
                         : effOverlay === "stripes"
-                        ? { backgroundImage: "repeating-linear-gradient(90deg, hsl(0 0% 0% / .35) 0 6px, transparent 6px 12px)" }
+                        ? { backgroundImage: "repeating-linear-gradient(90deg, hsl(0 0% 0% / .55) 0 6px, transparent 6px 12px)" }
                         : effOverlay === "diagonal"
-                        ? { backgroundImage: "repeating-linear-gradient(45deg, hsl(43 70% 55% / .12) 0 8px, transparent 8px 18px)" }
+                        ? { backgroundImage: "repeating-linear-gradient(45deg, hsl(43 80% 55% / .35) 0 8px, transparent 8px 18px)" }
                         : effOverlay === "crt"
-                        ? { backgroundImage: "repeating-linear-gradient(0deg, hsl(0 0% 0% / .25) 0 2px, transparent 2px 4px), radial-gradient(120% 80% at 50% 50%, transparent 60%, hsl(0 0% 0% / .55))" }
+                        ? { backgroundImage: "repeating-linear-gradient(0deg, hsl(0 0% 0% / .45) 0 2px, transparent 2px 4px), radial-gradient(120% 80% at 50% 50%, transparent 55%, hsl(0 0% 0% / .8))" }
                         : effOverlay === "dust"
-                        ? { backgroundImage: "radial-gradient(circle at 20% 30%, hsl(0 0% 100% / .15) 1px, transparent 2px), radial-gradient(circle at 70% 80%, hsl(0 0% 100% / .12) 1px, transparent 2px), radial-gradient(circle at 40% 70%, hsl(0 0% 100% / .10) 1px, transparent 2px)", backgroundSize: "120px 120px, 90px 90px, 150px 150px" }
+                        ? { backgroundImage: "radial-gradient(circle at 20% 30%, hsl(0 0% 100% / .35) 1px, transparent 2px), radial-gradient(circle at 70% 80%, hsl(0 0% 100% / .3) 1px, transparent 2px), radial-gradient(circle at 40% 70%, hsl(0 0% 100% / .25) 1px, transparent 2px)", backgroundSize: "120px 120px, 90px 90px, 150px 150px" }
                         : effOverlay === "bokeh"
-                        ? { backgroundImage: "radial-gradient(circle at 20% 30%, hsl(43 80% 60% / .35) 0, transparent 14px), radial-gradient(circle at 70% 60%, hsl(310 70% 60% / .3) 0, transparent 18px), radial-gradient(circle at 50% 80%, hsl(190 80% 60% / .3) 0, transparent 22px)" }
+                        ? { backgroundImage: "radial-gradient(circle at 20% 30%, hsl(43 80% 60% / .7) 0, transparent 18px), radial-gradient(circle at 70% 60%, hsl(310 70% 60% / .65) 0, transparent 22px), radial-gradient(circle at 50% 80%, hsl(190 80% 60% / .65) 0, transparent 26px)" }
                         : effOverlay === "duotone"
-                        ? { background: "linear-gradient(135deg, hsl(43 80% 55% / .35), hsl(280 70% 50% / .35))", mixBlendMode: "color" }
-                        : undefined
-                    }
+                        ? { background: "linear-gradient(135deg, hsl(43 80% 55% / .65), hsl(280 70% 50% / .65))" }
+                        : {}),
+                    }}
                   />
                 )}
 
-                {/* Custom text layer (variant overrides align/justify/padding/title size) */}
+                {/* Custom text layer (variant overrides align/justify/padding/title size + user X/Y offset) */}
                 <div
                   className={cn(
                     "pointer-events-none absolute inset-0 z-40 flex flex-col",
@@ -483,7 +501,11 @@ export default function StudioCustomizePage() {
                     effJustify === "center" && "justify-center",
                     effJustify === "end"    && "justify-end",
                   )}
-                  style={{ textAlign: effAlign, padding: effPadding }}
+                  style={{
+                    textAlign: effAlign,
+                    padding: effPadding,
+                    transform: `translate(${state.textX}%, ${state.textY}%)`,
+                  }}
                 >
                   {state.showLogo && (
                     <div
@@ -774,6 +796,19 @@ export default function StudioCustomizePage() {
                     </div>
                   </div>
                 </div>
+
+                <div className="mt-2 border-t border-border/60 pt-3">
+                  <p className="mb-2 text-[10px] uppercase tracking-widest text-gold/80">Position du texte</p>
+                  <Slider label="Décalage X" value={state.textX} min={-50} max={50} onChange={(v) => set({ textX: v })} unit="%" />
+                  <Slider label="Décalage Y" value={state.textY} min={-50} max={50} onChange={(v) => set({ textY: v })} unit="%" />
+                  <button
+                    type="button"
+                    onClick={() => set({ textX: 0, textY: 0 })}
+                    className="mt-1 inline-flex w-full items-center justify-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-[10px] text-foreground/70 transition-luxe hover:border-gold/40 hover:text-gold"
+                  >
+                    <RotateCcw className="h-2.5 w-2.5" /> Recentrer
+                  </button>
+                </div>
               </Section>
             </>
           )}
@@ -841,6 +876,20 @@ export default function StudioCustomizePage() {
                       />
                     </Field>
 
+                    <div className="rounded-lg border border-border/60 bg-card/40 p-2">
+                      <p className="mb-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">Avant / Après</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <BeforeAfterTile
+                          src={state.userImage} blend="normal" label="Avant" kind="photo"
+                          crop={{ scale: state.imageScale, x: state.imageX, y: state.imageY, rotate: state.imageRotate, opacity: state.imageOpacity }}
+                        />
+                        <BeforeAfterTile
+                          src={state.userImage} blend={state.imageBlend} label="Après" kind="photo"
+                          crop={{ scale: state.imageScale, x: state.imageX, y: state.imageY, rotate: state.imageRotate, opacity: state.imageOpacity }}
+                        />
+                      </div>
+                    </div>
+
                     <button
                       type="button"
                       onClick={() => set({ userImage: null, imageScale: 100, imageX: 0, imageY: 0, imageRotate: 0, imageOpacity: 100, imageBlend: "normal" })}
@@ -898,8 +947,8 @@ export default function StudioCustomizePage() {
                     <div className="rounded-lg border border-border/60 bg-card/40 p-2">
                       <p className="mb-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">Avant / Après</p>
                       <div className="grid grid-cols-2 gap-2">
-                        <BeforeAfterTile src={state.userLogo} blend="normal" label="Avant" kind="logo" />
-                        <BeforeAfterTile src={state.userLogo} blend={state.logoBlend} label="Après" kind="logo" />
+                        <BeforeAfterTile src={state.userLogo} blend="normal" label="Avant" kind="logo" crop={{ opacity: state.logoOpacity }} />
+                        <BeforeAfterTile src={state.userLogo} blend={state.logoBlend} label="Après" kind="logo" crop={{ opacity: state.logoOpacity }} />
                       </div>
                     </div>
                     <button
@@ -943,6 +992,12 @@ export default function StudioCustomizePage() {
                     </button>
                   ))}
                 </div>
+                {state.overlay !== "none" && (
+                  <div className="mt-3 border-t border-border/60 pt-3">
+                    <Slider label="Intensité de l'overlay" value={state.overlayIntensity} min={0} max={200} onChange={(v) => set({ overlayIntensity: v })} unit="%" />
+                    <p className="mt-1 text-[10px] text-muted-foreground">↑ 100% pour un effet plus marqué — jusqu'à 200%.</p>
+                  </div>
+                )}
               </Section>
             </>
           )}
@@ -1244,44 +1299,60 @@ interface BlendLook {
   backdrop: string;
 }
 
-// Looks adaptés aux PHOTOS de fond (riches, doux, cinéma)
+// Looks adaptés aux PHOTOS de fond — sélection IMPACTANTE (gradients riches, contrastes forts)
 const PHOTO_LOOKS: BlendLook[] = [
-  { id: "normal",     label: "Original",   mode: "normal",
+  { id: "normal",      label: "Original",   mode: "normal",
     backdrop: "linear-gradient(135deg,#1a1410,#0a0805)" },
-  { id: "soft-light", label: "Soyeux",     mode: "soft-light",
-    backdrop: "linear-gradient(135deg,hsl(43 80% 55%),hsl(38 65% 38%))" },
-  { id: "overlay",    label: "Cinéma",     mode: "overlay",
-    backdrop: "radial-gradient(60% 60% at 30% 30%,hsl(43 80% 55% / .9),transparent 60%),linear-gradient(180deg,#1a1208,#07050a)" },
-  { id: "multiply",   label: "Velours",    mode: "multiply",
-    backdrop: "linear-gradient(135deg,hsl(38 65% 38%),hsl(30 30% 12%))" },
-  { id: "screen",     label: "Lumineux",   mode: "screen",
-    backdrop: "linear-gradient(135deg,#0a0612,#1a0b2e)" },
-  { id: "luminosity", label: "Doré mono",  mode: "luminosity",
-    backdrop: "linear-gradient(135deg,hsl(43 80% 55%),hsl(38 65% 38%))" },
-  { id: "color",      label: "Teinte or",  mode: "color",
-    backdrop: "linear-gradient(135deg,hsl(43 80% 55%),hsl(35 70% 30%))" },
-  { id: "darken",     label: "Profond",    mode: "darken",
-    backdrop: "linear-gradient(135deg,hsl(40 30% 90%),hsl(35 20% 70%))" },
+  { id: "overlay",     label: "Cinéma Or",  mode: "overlay",
+    backdrop: "radial-gradient(70% 70% at 30% 30%,hsl(43 95% 55% / .95),transparent 60%),linear-gradient(180deg,#1a1208,#07050a)" },
+  { id: "screen",      label: "Néon Pulse", mode: "screen",
+    backdrop: "radial-gradient(circle at 30% 30%,hsl(310 100% 60% / .85),transparent 55%),radial-gradient(circle at 75% 75%,hsl(190 100% 55% / .8),transparent 55%),#0a0612" },
+  { id: "multiply",    label: "Velours Noir", mode: "multiply",
+    backdrop: "radial-gradient(80% 60% at 50% 50%,hsl(280 60% 45% / .9),transparent 70%),linear-gradient(135deg,#1a0820,#050208)" },
+  { id: "soft-light",  label: "Soyeux",     mode: "soft-light",
+    backdrop: "linear-gradient(135deg,hsl(43 95% 60%),hsl(15 80% 45%),hsl(330 70% 40%))" },
+  { id: "color-dodge", label: "Solaire",    mode: "color-dodge",
+    backdrop: "radial-gradient(70% 70% at 50% 50%,hsl(35 100% 55% / .9),hsl(15 90% 40% / .6),transparent 80%),#1a0a05" },
+  { id: "difference",  label: "Inverse",    mode: "difference",
+    backdrop: "linear-gradient(135deg,hsl(190 100% 55%),hsl(310 100% 60%))" },
+  { id: "exclusion",   label: "Risograph",  mode: "exclusion",
+    backdrop: "linear-gradient(135deg,hsl(35 95% 60%),hsl(0 80% 50%),hsl(280 70% 45%))" },
+  { id: "hue",         label: "Mood Shift", mode: "hue",
+    backdrop: "conic-gradient(from 0deg,hsl(0 80% 55%),hsl(60 80% 55%),hsl(180 80% 55%),hsl(280 80% 55%),hsl(0 80% 55%))" },
+  { id: "color",       label: "Teinte Or",  mode: "color",
+    backdrop: "linear-gradient(135deg,hsl(43 95% 55%),hsl(35 80% 30%))" },
+  { id: "luminosity",  label: "Mono Doré",  mode: "luminosity",
+    backdrop: "linear-gradient(135deg,hsl(43 95% 60%),hsl(38 70% 35%))" },
+  { id: "darken",      label: "Profond",    mode: "darken",
+    backdrop: "radial-gradient(80% 60% at 50% 30%,hsl(40 30% 95%),hsl(35 20% 60%))" },
 ];
 
-// Looks adaptés aux LOGOS (PNG transparent ou solide)
+// Looks adaptés aux LOGOS — IMPACT visuel maximisé
 const LOGO_LOOKS: BlendLook[] = [
-  { id: "normal",      label: "Original",  mode: "normal",
+  { id: "normal",      label: "Original",   mode: "normal",
     backdrop: "linear-gradient(135deg,#1a1410,#0a0805)" },
-  { id: "screen",      label: "Lumière",   mode: "screen",
-    backdrop: "linear-gradient(135deg,#0a0612,#1a0b2e)" },
-  { id: "overlay",     label: "Embossé",   mode: "overlay",
+  { id: "screen",      label: "Halo",       mode: "screen",
+    backdrop: "radial-gradient(circle at 50% 50%,hsl(43 95% 55% / .8),transparent 70%),#0a0612" },
+  { id: "color-dodge", label: "Néon Vif",   mode: "color-dodge",
+    backdrop: "radial-gradient(circle at 30% 30%,hsl(310 100% 60% / .8),transparent 60%),radial-gradient(circle at 70% 70%,hsl(190 100% 55% / .8),transparent 60%),#0a0612" },
+  { id: "overlay",     label: "Embossé Or", mode: "overlay",
+    backdrop: "linear-gradient(135deg,hsl(43 95% 60%),hsl(38 70% 35%))" },
+  { id: "soft-light",  label: "Délicat",    mode: "soft-light",
     backdrop: "linear-gradient(135deg,hsl(43 80% 55%),hsl(38 65% 38%))" },
-  { id: "soft-light",  label: "Délicat",   mode: "soft-light",
-    backdrop: "linear-gradient(135deg,hsl(43 80% 55%),hsl(38 65% 38%))" },
-  { id: "multiply",    label: "Encre",     mode: "multiply",
-    backdrop: "linear-gradient(135deg,hsl(40 30% 92%),hsl(35 20% 78%))" },
-  { id: "luminosity",  label: "Mono or",   mode: "luminosity",
-    backdrop: "linear-gradient(135deg,hsl(43 80% 55%),hsl(38 65% 38%))" },
-  { id: "color-dodge", label: "Néon",      mode: "color-dodge",
-    backdrop: "radial-gradient(circle at 30% 30%,hsl(310 100% 60% / .6),transparent 60%),radial-gradient(circle at 70% 70%,hsl(190 100% 55% / .6),transparent 60%),#0a0612" },
-  { id: "difference",  label: "Inverse",   mode: "difference",
-    backdrop: "linear-gradient(135deg,hsl(0 0% 95%),hsl(0 0% 70%))" },
+  { id: "multiply",    label: "Encre",      mode: "multiply",
+    backdrop: "linear-gradient(135deg,hsl(40 30% 95%),hsl(35 20% 75%))" },
+  { id: "difference",  label: "Inverse",    mode: "difference",
+    backdrop: "linear-gradient(135deg,hsl(0 0% 95%),hsl(0 0% 60%))" },
+  { id: "exclusion",   label: "Spectral",   mode: "exclusion",
+    backdrop: "linear-gradient(135deg,hsl(280 80% 55%),hsl(190 90% 55%))" },
+  { id: "hue",         label: "Couleur",    mode: "hue",
+    backdrop: "conic-gradient(from 90deg,hsl(43 95% 55%),hsl(310 90% 55%),hsl(190 90% 55%),hsl(43 95% 55%))" },
+  { id: "luminosity",  label: "Mono Or",    mode: "luminosity",
+    backdrop: "linear-gradient(135deg,hsl(43 95% 60%),hsl(38 70% 35%))" },
+  { id: "saturation",  label: "Vibrant",    mode: "saturation",
+    backdrop: "linear-gradient(135deg,hsl(310 100% 55%),hsl(190 100% 55%))" },
+  { id: "lighten",     label: "Aérien",     mode: "lighten",
+    backdrop: "linear-gradient(180deg,#1a1208,#000)" },
 ];
 
 function BlendLookGrid({
@@ -1293,69 +1364,119 @@ function BlendLookGrid({
   onChange: (v: string) => void;
 }) {
   const looks = kind === "photo" ? PHOTO_LOOKS : LOGO_LOOKS;
+  const { favs, isFav, toggle } = useBlendFavorites(kind);
+
+  // Pin favorites first, preserving favs order, then the rest in original order.
+  const ordered = useMemo(() => {
+    const favLooks = favs
+      .map((id) => looks.find((l) => l.id === id))
+      .filter((l): l is BlendLook => Boolean(l));
+    const rest = looks.filter((l) => !favs.includes(l.id));
+    return [...favLooks, ...rest];
+  }, [favs, looks]);
+
   return (
-    <div className="grid grid-cols-4 gap-2">
-      {looks.map((l) => {
-        const active = value === l.id;
-        return (
-          <button
-            key={l.id}
-            type="button"
-            onClick={() => onChange(l.id)}
-            title={l.label}
-            className={cn(
-              "group flex flex-col items-stretch overflow-hidden rounded-lg border transition-luxe",
-              active
-                ? "border-gold ring-1 ring-gold/50 shadow-glow"
-                : "border-border hover:border-gold/40"
-            )}
-          >
-            <div
-              className="relative aspect-square w-full"
-              style={{ background: l.backdrop }}
-            >
-              {src ? (
-                <img
-                  src={src}
-                  alt=""
-                  className={cn(
-                    "absolute inset-0 h-full w-full select-none",
-                    kind === "logo" ? "object-contain p-2" : "object-cover"
+    <div>
+      {favs.length > 0 && (
+        <p className="mb-1.5 inline-flex items-center gap-1 text-[9px] uppercase tracking-widest text-gold/70">
+          <Star className="h-2.5 w-2.5 fill-gold" /> Favoris épinglés ({favs.length}/3)
+        </p>
+      )}
+      <div className="grid grid-cols-4 gap-2">
+        {ordered.map((l) => {
+          const active = value === l.id;
+          const fav = isFav(l.id);
+          const pinned = fav;
+          return (
+            <div key={l.id} className="relative">
+              <button
+                type="button"
+                onClick={() => onChange(l.id)}
+                title={l.label}
+                className={cn(
+                  "group flex w-full flex-col items-stretch overflow-hidden rounded-lg border transition-luxe",
+                  active
+                    ? "border-gold ring-1 ring-gold/50 shadow-glow"
+                    : pinned
+                    ? "border-gold/40"
+                    : "border-border hover:border-gold/40"
+                )}
+              >
+                <div
+                  className="relative aspect-square w-full"
+                  style={{ background: l.backdrop }}
+                >
+                  {src ? (
+                    <img
+                      src={src}
+                      alt=""
+                      className={cn(
+                        "absolute inset-0 h-full w-full select-none",
+                        kind === "logo" ? "object-contain p-2" : "object-cover"
+                      )}
+                      style={{ mixBlendMode: l.mode }}
+                      draggable={false}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 grid place-items-center text-[9px] text-white/50">—</div>
                   )}
-                  style={{ mixBlendMode: l.mode }}
-                  draggable={false}
-                />
-              ) : (
-                <div className="absolute inset-0 grid place-items-center text-[9px] text-white/50">—</div>
-              )}
-              {active && (
-                <span className="absolute right-1 top-1 grid h-4 w-4 place-items-center rounded-full bg-gold text-[9px] text-[hsl(var(--ink))]">
-                  <Check className="h-2.5 w-2.5" />
+                  {active && (
+                    <span className="absolute right-1 top-1 grid h-4 w-4 place-items-center rounded-full bg-gold text-[9px] text-[hsl(var(--ink))]">
+                      <Check className="h-2.5 w-2.5" />
+                    </span>
+                  )}
+                </div>
+                <span
+                  className={cn(
+                    "px-1.5 py-1 text-center text-[10px] font-medium tracking-wide",
+                    active ? "bg-gold/10 text-gold" : "bg-card text-foreground/80"
+                  )}
+                >
+                  {l.label}
                 </span>
-              )}
+              </button>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); toggle(l.id); }}
+                aria-label={fav ? "Retirer des favoris" : "Ajouter aux favoris"}
+                title={fav ? "Retirer des favoris" : "Épingler ce look (max 3)"}
+                className={cn(
+                  "absolute left-1 top-1 grid h-5 w-5 place-items-center rounded-full border backdrop-blur transition-luxe",
+                  fav
+                    ? "border-gold bg-gold text-[hsl(var(--ink))]"
+                    : "border-white/30 bg-black/40 text-white/80 hover:border-gold hover:text-gold"
+                )}
+              >
+                <Star className={cn("h-2.5 w-2.5", fav && "fill-current")} />
+              </button>
             </div>
-            <span
-              className={cn(
-                "px-1.5 py-1 text-center text-[10px] font-medium tracking-wide",
-                active ? "bg-gold/10 text-gold" : "bg-card text-foreground/80"
-              )}
-            >
-              {l.label}
-            </span>
-          </button>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
 
+interface BeforeAfterCrop {
+  scale?: number;     // %
+  x?: number;         // %
+  y?: number;         // %
+  rotate?: number;    // deg
+  opacity?: number;   // %
+}
+
 function BeforeAfterTile({
-  src, blend, label, kind = "photo",
-}: { src: string | null; blend: string; label: string; kind?: "photo" | "logo" }) {
+  src, blend, label, kind = "photo", crop,
+}: { src: string | null; blend: string; label: string; kind?: "photo" | "logo"; crop?: BeforeAfterCrop }) {
+  const scale = (crop?.scale ?? 100) / 100;
+  const x = crop?.x ?? 0;
+  const y = crop?.y ?? 0;
+  const rotate = crop?.rotate ?? 0;
+  const opacity = (crop?.opacity ?? 100) / 100;
   return (
     <div className="overflow-hidden rounded-md border border-border/60">
       <div
-        className="relative aspect-square"
+        className="relative aspect-square overflow-hidden"
         style={{
           background:
             "radial-gradient(60% 60% at 30% 30%,hsl(43 80% 55% / .9),transparent 60%),linear-gradient(180deg,#1a1208,#07050a)",
@@ -1366,10 +1487,15 @@ function BeforeAfterTile({
             src={src}
             alt={label}
             className={cn(
-              "absolute inset-0 h-full w-full",
+              "absolute left-1/2 top-1/2 h-full w-full max-w-none",
               kind === "logo" ? "object-contain p-2" : "object-cover"
             )}
-            style={{ mixBlendMode: blend as BlendMode }}
+            style={{
+              mixBlendMode: blend as BlendMode,
+              opacity,
+              transform: `translate(calc(-50% + ${x}%), calc(-50% + ${y}%)) scale(${scale}) rotate(${rotate}deg)`,
+              transformOrigin: "center",
+            }}
           />
         )}
       </div>

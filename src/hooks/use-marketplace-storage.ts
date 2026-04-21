@@ -53,3 +53,17 @@ export function useRecents() {
   );
   return { recents, push };
 }
+
+const BLEND_FAV_KEY = "evena.studio.blendFavorites";
+export function useBlendFavorites(kind: "photo" | "logo") {
+  const key = `${BLEND_FAV_KEY}.${kind}`;
+  const [favs, setFavs] = useLocalStorageList(key, 3);
+  const isFav = useCallback((id: string) => favs.includes(id), [favs]);
+  const toggle = useCallback(
+    (id: string) => {
+      setFavs(favs.includes(id) ? favs.filter((x) => x !== id) : [id, ...favs].slice(0, 3));
+    },
+    [favs, setFavs]
+  );
+  return { favs, isFav, toggle };
+}
