@@ -887,20 +887,19 @@ export default function StudioCustomizePage() {
                         ))}
                       </div>
                     </Field>
-                    <Field label="Mode de fusion logo">
-                      <BlendPresetGrid
+                    <Field label="Style de fusion logo">
+                      <BlendLookGrid
                         src={state.userLogo}
                         value={state.logoBlend}
-                        options={["normal","multiply","screen","overlay","soft-light","luminosity","color-dodge","difference"]}
+                        kind="logo"
                         onChange={(b) => set({ logoBlend: b as State["logoBlend"] })}
-                        compact
                       />
                     </Field>
                     <div className="rounded-lg border border-border/60 bg-card/40 p-2">
                       <p className="mb-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">Avant / Après</p>
                       <div className="grid grid-cols-2 gap-2">
-                        <BeforeAfterTile src={state.userLogo} blend="normal" label="Avant" />
-                        <BeforeAfterTile src={state.userLogo} blend={state.logoBlend} label="Après" />
+                        <BeforeAfterTile src={state.userLogo} blend="normal" label="Avant" kind="logo" />
+                        <BeforeAfterTile src={state.userLogo} blend={state.logoBlend} label="Après" kind="logo" />
                       </div>
                     </div>
                     <button
