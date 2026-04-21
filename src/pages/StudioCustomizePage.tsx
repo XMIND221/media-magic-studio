@@ -4,7 +4,9 @@ import {
   ArrowLeft, Check, Download, Sparkles, Type, Palette, Image as ImageIcon,
   Layers, Wand2, RotateCcw, Copy, Eye, EyeOff, AlignLeft, AlignCenter, AlignRight,
   Bold, Italic, Sun, CircleDot, Save, Share2, Upload, Trash2, Move, Star,
+  Grid3x3, SplitSquareHorizontal, Zap,
 } from "lucide-react";
+import { toPng } from "html-to-image";
 import { useBlendFavorites } from "@/hooks/use-marketplace-storage";
 import { EVENA_MARKETPLACE_CATALOG } from "@/data/evenaMarketplaceCatalog";
 import { ProductThumbnail } from "@/components/marketplace/ProductThumbnail";
@@ -227,8 +229,17 @@ interface State {
   // Text positioning offset
   textX: number;          // -50..50 (%)
   textY: number;          // -50..50 (%)
+  // Per-text colors + sizes
+  titleColor: string;          // CSS color (default white)
+  subtitleSize: number;        // 8-28 (px)
+  subtitleColor: string;       // CSS color (defaults to accent if "")
+  subtitleTracking: number;    // 0-50 (× 0.01em)
+  badgeColor: string;          // background color (defaults to accent if "")
+  badgeTextColor: string;      // foreground color
   // Overlay impact
   overlayIntensity: number; // 0-200 (%)
+  // Compare mode
+  compareMode: "off" | "ba" | "grid";
 }
 
 type Action =
@@ -289,7 +300,14 @@ export default function StudioCustomizePage() {
     logoBlend: "normal",
     textX: 0,
     textY: 0,
+    titleColor: "#FFFFFF",
+    subtitleSize: 11,
+    subtitleColor: "",
+    subtitleTracking: 35,
+    badgeColor: "",
+    badgeTextColor: "",
     overlayIntensity: 100,
+    compareMode: "off",
   }), [product]);
 
   const [state, dispatch] = useReducer(reducer, initial);
@@ -306,6 +324,12 @@ export default function StudioCustomizePage() {
   const activeAccent  = useMemo(() => ACCENTS.find(a => a.id === state.accent)!, [state.accent]);
   const activeFont    = useMemo(() => FONT_PAIRS.find(f => f.id === state.font)!, [state.font]);
   const activeFormat  = useMemo(() => FORMATS.find(f => f.id === state.format) ?? FORMATS[0], [state.format]);
+
+  // Refs / hooks must be declared before any early return
+  const previewRef = useRef<HTMLDivElement>(null);
+  const [exporting, setExporting] = useState(false);
+  const photoFavs = useBlendFavorites("photo");
+  const logoFavs = useBlendFavorites("logo");
 
   if (!product) {
     return (
@@ -338,6 +362,91 @@ export default function StudioCustomizePage() {
   // Variant seed for thumbnail engines: ONLY variant — never font/accent (font shouldn't change colors)
   const thumbSeed = `${state.variantSeed}-${state.variantSeed.repeat(3)}-${state.palette}`;
 
+  // PNG export handler (uses previewRef declared above)
+  const handleExport = async () => {
+    if (!previewRef.current) return;
+    setExporting(true);
+    try {
+      const dataUrl = await toPng(previewRef.current, {
+        cacheBust: true,
+        pixelRatio: 3, // haute résolution
+        backgroundColor: undefined,
+      });
+      const link = document.createElement("a");
+      link.download = `evena-${product?.id ?? "design"}-${state.variantSeed}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error("Export PNG failed", err);
+      alert("Échec de l'export. Si vous utilisez une image distante, importez-la directement (PNG/JPG).");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+
+  // Auto-look : analyse simple de la luminance moyenne d'une image dataURL
+  const autoPickBlend = async (src: string | null, kind: "photo" | "logo"): Promise<string | null> => {
+    if (!src) return null;
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        try {
+          const c = document.createElement("canvas");
+          const w = (c.width = 32);
+          const h = (c.height = 32);
+          const ctx = c.getContext("2d");
+          if (!ctx) return resolve(null);
+          ctx.drawImage(img, 0, 0, w, h);
+          const data = ctx.getImageData(0, 0, w, h).data;
+          let lum = 0, sat = 0, alpha = 0, count = 0;
+          for (let i = 0; i < data.length; i += 4) {
+            const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
+            if (a < 16) continue;
+            lum += (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            sat += max === 0 ? 0 : (max - min) / max;
+            alpha += a / 255;
+            count++;
+          }
+          const avgLum = count ? lum / count : 0.5;
+          const avgSat = count ? sat / count : 0.5;
+          const avgAlpha = count ? alpha / count : 1;
+          // Heuristique
+          if (kind === "logo") {
+            if (avgAlpha < 0.85) return resolve("screen");          // PNG transparent → halo
+            if (avgLum < 0.3) return resolve("screen");             // logo sombre → screen
+            if (avgLum > 0.75 && avgSat < 0.2) return resolve("multiply"); // logo clair mono → encre
+            if (avgSat > 0.5) return resolve("color-dodge");        // logo coloré → néon
+            return resolve("overlay");
+          } else {
+            if (avgLum < 0.25) return resolve("screen");            // photo sombre → lumineux
+            if (avgLum > 0.7) return resolve("multiply");           // photo claire → velours
+            if (avgSat > 0.55) return resolve("soft-light");        // photo saturée → soyeux
+            return resolve("overlay");                              // par défaut → cinéma
+          }
+        } catch {
+          resolve(null);
+        }
+      };
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+  };
+
+  const handleAutoLook = async () => {
+    const [b1, b2] = await Promise.all([
+      autoPickBlend(state.userImage, "photo"),
+      autoPickBlend(state.userLogo, "logo"),
+    ]);
+    const patch: Partial<State> = {};
+    if (b1) patch.imageBlend = b1 as State["imageBlend"];
+    if (b2) patch.logoBlend = b2 as State["logoBlend"];
+    if (Object.keys(patch).length) set(patch);
+  };
+
+
   return (
     <div className="min-h-screen bg-background">
       {/* Top bar */}
@@ -366,9 +475,11 @@ export default function StudioCustomizePage() {
             </button>
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-gold px-4 py-2 text-xs font-semibold tracking-wide text-[hsl(var(--ink))] shadow-glow transition-luxe hover:scale-[1.02]"
+              onClick={handleExport}
+              disabled={exporting}
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-gold px-4 py-2 text-xs font-semibold tracking-wide text-[hsl(var(--ink))] shadow-glow transition-luxe hover:scale-[1.02] disabled:opacity-60"
             >
-              <Download className="h-3.5 w-3.5" /> Exporter
+              <Download className="h-3.5 w-3.5" /> {exporting ? "Export…" : "Exporter PNG"}
             </button>
           </div>
         </div>
@@ -380,6 +491,7 @@ export default function StudioCustomizePage() {
           <div className="rounded-3xl border border-border/60 bg-gradient-noir p-4 sm:p-8">
             <div className="mx-auto" style={{ maxWidth: ["banner","paysage","ultrawide","yt-banner","linkedin","ticket"].includes(state.format) ? 640 : 380 }}>
               <div
+                ref={previewRef}
                 key={`${state.format}-${state.palette}-${state.variantSeed}`}
                 className={cn(
                   "relative overflow-hidden border border-border/60 animate-fade-up",
@@ -493,6 +605,22 @@ export default function StudioCustomizePage() {
                   />
                 )}
 
+                {/* Legibility scrim — softens busy variants so text always reads */}
+                {(state.showTitle || state.showSubtitle || state.showBadge) && (
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 z-[35]"
+                    style={{
+                      background:
+                        effJustify === "start"
+                          ? "linear-gradient(180deg, hsl(0 0% 0% / 0.45), transparent 50%)"
+                          : effJustify === "end"
+                          ? "linear-gradient(0deg, hsl(0 0% 0% / 0.55), transparent 55%)"
+                          : "radial-gradient(70% 55% at 50% 50%, hsl(0 0% 0% / 0.45), transparent 75%)",
+                    }}
+                  />
+                )}
+
                 {/* Custom text layer (variant overrides align/justify/padding/title size + user X/Y offset) */}
                 <div
                   className={cn(
@@ -530,20 +658,24 @@ export default function StudioCustomizePage() {
                         effAlign === "center" && "mx-auto",
                         effAlign === "right" && "ml-auto",
                       )}
-                      style={{ background: activeAccent.color, color: "hsl(var(--ink))" }}
+                      style={{
+                        background: state.badgeColor || activeAccent.color,
+                        color: state.badgeTextColor || "hsl(var(--ink))",
+                      }}
                     >
                       {state.badge}
                     </span>
                   )}
                   {state.showTitle && (
                     <h2
-                      className="leading-tight text-white drop-shadow-md"
+                      className="leading-tight drop-shadow-md"
                       style={{
                         fontFamily: activeFont.display,
                         fontSize: effTitleSize,
                         fontWeight: state.titleWeight,
                         fontStyle: state.titleItalic ? "italic" : "normal",
                         textTransform: effUppercase ? "uppercase" : "none",
+                        color: state.titleColor || "#FFFFFF",
                       }}
                     >
                       {state.title || " "}
@@ -551,8 +683,12 @@ export default function StudioCustomizePage() {
                   )}
                   {state.showSubtitle && state.subtitle && (
                     <p
-                      className="mt-1 text-[11px] uppercase tracking-[0.35em]"
-                      style={{ color: activeAccent.color }}
+                      className="mt-1 uppercase"
+                      style={{
+                        color: state.subtitleColor || activeAccent.color,
+                        fontSize: state.subtitleSize,
+                        letterSpacing: `${state.subtitleTracking / 100}em`,
+                      }}
                     >
                       {state.subtitle}
                     </p>
@@ -566,11 +702,70 @@ export default function StudioCustomizePage() {
             </div>
           </div>
 
-          {/* Quick actions row */}
+          {/* Quick actions row + Compare mode */}
           <div className="mt-3 grid grid-cols-3 gap-2">
             <QuickBtn icon={<Copy className="h-3.5 w-3.5" />} label="Dupliquer" />
             <QuickBtn icon={<Share2 className="h-3.5 w-3.5" />} label="Partager" />
-            <QuickBtn icon={<Wand2 className="h-3.5 w-3.5" />} label="IA Auto" />
+            <button
+              type="button"
+              onClick={handleAutoLook}
+              disabled={!state.userImage && !state.userLogo}
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-gold/40 bg-gold/10 px-3 py-2 text-[11px] text-gold transition-luxe hover:bg-gold/20 disabled:opacity-50"
+            >
+              <Zap className="h-3.5 w-3.5" /> Auto-look
+            </button>
+          </div>
+
+          {/* Compare mode toggle */}
+          <div className="mt-3 rounded-2xl border border-border/60 bg-card/40 p-2">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-[10px] uppercase tracking-[0.35em] text-gold/80">Comparer</p>
+              <div className="flex rounded-lg border border-border bg-background/50 p-0.5">
+                {([
+                  { id: "off",  label: "Off",       icon: null },
+                  { id: "ba",   label: "Avant/Après", icon: <SplitSquareHorizontal className="h-3 w-3" /> },
+                  { id: "grid", label: "Grille",     icon: <Grid3x3 className="h-3 w-3" /> },
+                ] as const).map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => set({ compareMode: m.id })}
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium transition-luxe",
+                      state.compareMode === m.id
+                        ? "bg-gradient-gold text-[hsl(var(--ink))]"
+                        : "text-foreground/70 hover:text-foreground"
+                    )}
+                  >
+                    {m.icon}{m.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {state.compareMode !== "off" && (
+              <CompareGrid
+                mode={state.compareMode}
+                product={product}
+                isMedia={isMedia}
+                state={state}
+                photoFavs={photoFavs.favs}
+                logoFavs={logoFavs.favs}
+                activePalette={activePalette}
+                activeAccent={activeAccent}
+                activeFont={activeFont}
+                activeFormat={activeFormat}
+                profile={profile}
+                effOverlay={effOverlay}
+                effAlign={effAlign}
+                effJustify={effJustify}
+                effPadding={effPadding}
+                effTitleSize={effTitleSize}
+                effUppercase={effUppercase}
+                filterCss={filterCss}
+                thumbSeed={thumbSeed}
+              />
+            )}
           </div>
         </section>
 
@@ -797,7 +992,25 @@ export default function StudioCustomizePage() {
                   </div>
                 </div>
 
-                <div className="mt-2 border-t border-border/60 pt-3">
+                <div className="mt-3 border-t border-border/60 pt-3">
+                  <p className="mb-2 text-[10px] uppercase tracking-widest text-gold/80">Couleur des textes</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <ColorField label="Titre" value={state.titleColor} fallback="#FFFFFF" onChange={(v) => set({ titleColor: v })} />
+                    <ColorField label="Sous-titre" value={state.subtitleColor} fallback={activeAccent.color} onChange={(v) => set({ subtitleColor: v })} />
+                    <ColorField label="Badge" value={state.badgeColor} fallback={activeAccent.color} onChange={(v) => set({ badgeColor: v })} />
+                  </div>
+                  <div className="mt-2">
+                    <ColorField label="Texte du badge" value={state.badgeTextColor} fallback="#1a1208" onChange={(v) => set({ badgeTextColor: v })} />
+                  </div>
+                </div>
+
+                <div className="mt-3 border-t border-border/60 pt-3">
+                  <p className="mb-2 text-[10px] uppercase tracking-widest text-gold/80">Sous-titre</p>
+                  <Slider label="Taille" value={state.subtitleSize} min={8} max={28} onChange={(v) => set({ subtitleSize: v })} unit="px" />
+                  <Slider label="Espacement" value={state.subtitleTracking} min={0} max={60} onChange={(v) => set({ subtitleTracking: v })} />
+                </div>
+
+                <div className="mt-3 border-t border-border/60 pt-3">
                   <p className="mb-2 text-[10px] uppercase tracking-widest text-gold/80">Position du texte</p>
                   <Slider label="Décalage X" value={state.textX} min={-50} max={50} onChange={(v) => set({ textX: v })} unit="%" />
                   <Slider label="Décalage Y" value={state.textY} min={-50} max={50} onChange={(v) => set({ textY: v })} unit="%" />
@@ -861,6 +1074,70 @@ export default function StudioCustomizePage() {
                     <p className="rounded-md border border-gold/20 bg-gold/5 px-2 py-1.5 text-[10px] text-gold/80">
                       💡 Astuce : glissez directement la photo dans l'aperçu pour la déplacer.
                     </p>
+
+                    <Field label="Cadrage rapide (alignement)">
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {([
+                          { id: "tl", x: -50, y: -50, label: "↖" },
+                          { id: "tc", x: 0,   y: -50, label: "↑" },
+                          { id: "tr", x: 50,  y: -50, label: "↗" },
+                          { id: "ml", x: -50, y: 0,   label: "←" },
+                          { id: "mc", x: 0,   y: 0,   label: "●" },
+                          { id: "mr", x: 50,  y: 0,   label: "→" },
+                          { id: "bl", x: -50, y: 50,  label: "↙" },
+                          { id: "bc", x: 0,   y: 50,  label: "↓" },
+                          { id: "br", x: 50,  y: 50,  label: "↘" },
+                        ] as const).map((g) => {
+                          const active = state.imageX === g.x && state.imageY === g.y;
+                          return (
+                            <button
+                              key={g.id}
+                              type="button"
+                              onClick={() => set({ imageX: g.x, imageY: g.y })}
+                              className={cn(
+                                "rounded-md border py-1.5 text-base transition-luxe",
+                                active
+                                  ? "border-gold bg-gold/10 text-gold"
+                                  : "border-border bg-card text-foreground/70 hover:border-gold/40"
+                              )}
+                            >
+                              {g.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </Field>
+
+                    <Field label="Format rapide">
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {([
+                          { id: "carré",    label: "1:1"  },
+                          { id: "post",     label: "4:5"  },
+                          { id: "portrait", label: "3:4"  },
+                          { id: "story",    label: "9:16" },
+                          { id: "paysage",  label: "16:9" },
+                          { id: "banner",   label: "21:9" },
+                        ] as const).map((r) => {
+                          const matched = state.format === r.id;
+                          return (
+                            <button
+                              key={r.id}
+                              type="button"
+                              onClick={() => set({ format: r.id })}
+                              className={cn(
+                                "rounded-md border px-2 py-1.5 text-[11px] transition-luxe",
+                                matched
+                                  ? "border-gold bg-gold/10 text-gold"
+                                  : "border-border bg-card text-foreground/70 hover:border-gold/40"
+                              )}
+                            >
+                              {r.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </Field>
+
                     <Slider label="Zoom" value={state.imageScale} min={50} max={300} onChange={(v) => set({ imageScale: v })} unit="%" />
                     <Slider label="Rotation" value={state.imageRotate} min={-180} max={180} onChange={(v) => set({ imageRotate: v })} unit="°" />
                     <Slider label="Position X" value={state.imageX} min={-100} max={100} onChange={(v) => set({ imageX: v })} unit="%" />
@@ -1465,6 +1742,56 @@ interface BeforeAfterCrop {
   opacity?: number;   // %
 }
 
+function ColorField({ label, value, fallback, onChange }: {
+  label: string; value: string; fallback: string; onChange: (v: string) => void;
+}) {
+  const effective = value || fallback;
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-[9px] uppercase tracking-widest text-muted-foreground">{label}</span>
+      <div className="flex items-center gap-1.5 rounded-md border border-border bg-card px-1.5 py-1">
+        <input
+          type="color"
+          value={toHex(effective)}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-6 w-6 cursor-pointer rounded border-0 bg-transparent p-0"
+          aria-label={label}
+        />
+        <span className="truncate text-[10px] text-foreground/70">{value ? value : "auto"}</span>
+        {value && (
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="ml-auto text-[9px] text-muted-foreground hover:text-gold"
+            title="Réinitialiser"
+          >×</button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function toHex(input: string): string {
+  if (!input) return "#ffffff";
+  if (input.startsWith("#") && (input.length === 7 || input.length === 4)) {
+    if (input.length === 4) return "#" + input.slice(1).split("").map(c => c + c).join("");
+    return input.toLowerCase();
+  }
+  try {
+    const ctx = document.createElement("canvas").getContext("2d");
+    if (!ctx) return "#ffffff";
+    ctx.fillStyle = "#fff";
+    ctx.fillStyle = input;
+    const v = ctx.fillStyle as string;
+    if (v.startsWith("#")) return v;
+    const m = v.match(/\d+/g);
+    if (m && m.length >= 3) {
+      return "#" + [0,1,2].map(i => Number(m[i]).toString(16).padStart(2, "0")).join("");
+    }
+  } catch { /* ignore */ }
+  return "#ffffff";
+}
+
 function BeforeAfterTile({
   src, blend, label, kind = "photo", crop,
 }: { src: string | null; blend: string; label: string; kind?: "photo" | "logo"; crop?: BeforeAfterCrop }) {
@@ -1503,5 +1830,219 @@ function BeforeAfterTile({
         {label}
       </p>
     </div>
+  );
+}
+
+/* ----------- Compare grid : mini-previews côte à côte ----------- */
+
+interface MiniPreviewProps {
+  product: any;
+  isMedia: boolean;
+  state: State;
+  activePalette: any;
+  activeAccent: any;
+  activeFont: any;
+  activeFormat: any;
+  profile: VariantProfile;
+  effOverlay: string;
+  effAlign: "left" | "center" | "right";
+  effJustify: "start" | "center" | "end";
+  effPadding: number;
+  effTitleSize: number;
+  effUppercase: boolean;
+  filterCss: string;
+  thumbSeed: string;
+  imageBlendOverride?: string;
+  logoBlendOverride?: string;
+  label?: string;
+}
+
+function MiniPreview(p: MiniPreviewProps) {
+  const s = p.state;
+  const imageBlend = (p.imageBlendOverride ?? s.imageBlend) as React.CSSProperties["mixBlendMode"];
+  const logoBlend = (p.logoBlendOverride ?? s.logoBlend) as React.CSSProperties["mixBlendMode"];
+  return (
+    <div className="overflow-hidden rounded-lg border border-border/60">
+      <div
+        className="relative w-full overflow-hidden"
+        style={{
+          aspectRatio: p.activeFormat.ratio,
+          borderRadius: 0,
+          background: s.showBackground
+            ? (p.activePalette.kind === "gradient" || !p.activePalette.kind
+                ? `linear-gradient(135deg, ${p.activePalette.from}, ${p.activePalette.to})`
+                : p.activePalette.css)
+            : "transparent",
+        }}
+      >
+        {/* Template visual */}
+        <div
+          className="absolute inset-0"
+          style={{
+            filter: p.filterCss,
+            opacity: s.paletteOpacity / 100,
+            transform: `${p.profile.flip ? "scaleX(-1) " : ""}translate(${p.profile.translateX}%, ${p.profile.translateY}%) scale(${p.profile.scale}) rotate(${p.profile.rotate}deg)`,
+            transformOrigin: "center",
+            mixBlendMode: p.profile.blendOverlay,
+          }}
+        >
+          {s.showBackground && (
+            p.isMedia
+              ? <MediaThumbnail product={{ ...p.product, title: s.title }} variantSeed={p.thumbSeed} />
+              : <ProductThumbnail product={{ ...p.product, title: s.title }} variantSeed={p.thumbSeed} />
+          )}
+        </div>
+
+        {/* User image — same crop/position/scale as main preview */}
+        {s.userImage && (
+          <div
+            className="absolute inset-0 z-10 overflow-hidden"
+            style={{ opacity: s.imageOpacity / 100, mixBlendMode: imageBlend }}
+          >
+            <img
+              src={s.userImage}
+              alt=""
+              className="absolute left-1/2 top-1/2 h-full w-full max-w-none"
+              style={{
+                objectFit: s.imageMode,
+                transform: `translate(calc(-50% + ${s.imageX}%), calc(-50% + ${s.imageY}%)) scale(${s.imageScale / 100}) rotate(${s.imageRotate}deg)`,
+                transformOrigin: "center",
+              }}
+              draggable={false}
+            />
+          </div>
+        )}
+
+        {/* User logo */}
+        {s.userLogo && (
+          <img
+            src={s.userLogo}
+            alt=""
+            className={cn(
+              "pointer-events-none absolute z-30 select-none object-contain",
+              s.logoCorner === "tl" && "left-2 top-2",
+              s.logoCorner === "tr" && "right-2 top-2",
+              s.logoCorner === "bl" && "left-2 bottom-2",
+              s.logoCorner === "br" && "right-2 bottom-2",
+            )}
+            style={{
+              width: Math.round(s.logoSize * 0.6),
+              height: "auto",
+              maxHeight: Math.round(s.logoSize * 0.6),
+              opacity: s.logoOpacity / 100,
+              mixBlendMode: logoBlend,
+            }}
+            draggable={false}
+          />
+        )}
+
+        {/* Overlay */}
+        {p.effOverlay !== "none" && (
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-0 z-20",
+              p.effOverlay === "grain"     && "mt-noise",
+              p.effOverlay === "scan"      && "mt-scanlines",
+              p.effOverlay === "leak"      && "mt-light-leak",
+              p.effOverlay === "vignette"  && "mt-vignette",
+              p.effOverlay === "grid"      && "mt-grid-soft",
+              p.effOverlay === "shimmer"   && "mt-gold-shimmer",
+              p.effOverlay === "vinyl"     && "mt-vinyl",
+              p.effOverlay === "spotlight" && "mt-spotlight",
+              p.effOverlay === "orbs"      && "mt-orbs",
+              p.effOverlay === "neon"      && "mt-neon-bg",
+            )}
+            style={{ opacity: s.overlayIntensity / 100 }}
+          />
+        )}
+
+        {/* Scrim + text */}
+        <div className="pointer-events-none absolute inset-0 z-[35]"
+          style={{ background: "radial-gradient(70% 55% at 50% 50%, hsl(0 0% 0% / 0.45), transparent 75%)" }} />
+
+        <div
+          className={cn(
+            "pointer-events-none absolute inset-0 z-40 flex flex-col",
+            p.effJustify === "start"  && "justify-start",
+            p.effJustify === "center" && "justify-center",
+            p.effJustify === "end"    && "justify-end",
+          )}
+          style={{
+            textAlign: p.effAlign,
+            padding: Math.round(p.effPadding * 0.6),
+            transform: `translate(${s.textX}%, ${s.textY}%)`,
+          }}
+        >
+          {s.showTitle && (
+            <h3
+              className="leading-tight drop-shadow-md"
+              style={{
+                fontFamily: p.activeFont.display,
+                fontSize: Math.round(p.effTitleSize * 0.55),
+                fontWeight: s.titleWeight,
+                fontStyle: s.titleItalic ? "italic" : "normal",
+                textTransform: p.effUppercase ? "uppercase" : "none",
+                color: s.titleColor || "#FFFFFF",
+              }}
+            >
+              {s.title || " "}
+            </h3>
+          )}
+        </div>
+
+        {p.label && (
+          <span className="absolute left-1 top-1 z-50 rounded-md bg-black/70 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-widest text-gold backdrop-blur">
+            {p.label}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface CompareGridProps extends Omit<MiniPreviewProps, "label" | "imageBlendOverride" | "logoBlendOverride"> {
+  mode: "ba" | "grid";
+  photoFavs: string[];
+  logoFavs: string[];
+}
+
+function CompareGrid(p: CompareGridProps) {
+  const { mode, photoFavs, logoFavs, ...mini } = p;
+  const hasPhoto = Boolean(p.state.userImage);
+  const favs = hasPhoto ? photoFavs : logoFavs;
+  const blendKey = hasPhoto ? "imageBlendOverride" : "logoBlendOverride";
+
+  if (mode === "ba") {
+    // Show current vs favorite #1 (or "normal" if none saved)
+    const altBlend = favs[0] ?? "normal";
+    return (
+      <div className="grid grid-cols-2 gap-2">
+        <MiniPreview {...mini} label="Actuel" />
+        <MiniPreview {...mini} {...{ [blendKey]: altBlend }} label={`Fav 1 · ${altBlend}`} />
+      </div>
+    );
+  }
+
+  // grid: current + up to 2 favorites = 1-3 tiles
+  const tiles: { override?: string; label: string }[] = [{ label: "Actuel" }];
+  favs.slice(0, 2).forEach((b, i) => tiles.push({ override: b, label: `Fav ${i + 1} · ${b}` }));
+  if (tiles.length === 1) {
+    tiles.push({ override: "normal", label: "Original" });
+    tiles.push({ override: "overlay", label: "Suggestion" });
+  }
+  const cols = tiles.length === 2 ? "grid-cols-2" : "grid-cols-3";
+  return (
+    <>
+      <div className={cn("grid gap-2", cols)}>
+        {tiles.map((t, i) => (
+          <MiniPreview key={i} {...mini} {...(t.override ? { [blendKey]: t.override } : {})} label={t.label} />
+        ))}
+      </div>
+      {favs.length === 0 && (
+        <p className="mt-2 text-[10px] text-muted-foreground">
+          💡 Épinglez vos looks préférés (★) dans Calques → Style de fusion pour les comparer ici.
+        </p>
+      )}
+    </>
   );
 }
