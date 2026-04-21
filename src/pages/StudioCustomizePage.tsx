@@ -397,31 +397,33 @@ export default function StudioCustomizePage() {
                   )}
                 </div>
 
-                {/* User-uploaded background image */}
+                {/* User-uploaded background image — sits above template, below overlays + text */}
                 {state.userImage && (
-                  <img
-                    src={state.userImage}
-                    alt="Visuel utilisateur"
-                    className="pointer-events-none absolute inset-0 h-full w-full select-none"
-                    style={{
-                      objectFit: state.imageMode,
-                      transform: `translate(${state.imageX}%, ${state.imageY}%) scale(${state.imageScale / 100})`,
-                      transformOrigin: "center",
-                      opacity: state.imageOpacity / 100,
-                      mixBlendMode: state.imageBlend,
-                      filter: filterCss,
-                    }}
-                    draggable={false}
-                  />
+                  <div
+                    className="pointer-events-none absolute inset-0 z-10 overflow-hidden"
+                    style={{ opacity: state.imageOpacity / 100, mixBlendMode: state.imageBlend }}
+                  >
+                    <img
+                      src={state.userImage}
+                      alt="Visuel utilisateur"
+                      className="absolute left-1/2 top-1/2 h-full w-full max-w-none -translate-x-1/2 -translate-y-1/2 select-none"
+                      style={{
+                        objectFit: state.imageMode,
+                        transform: `translate(calc(-50% + ${state.imageX}%), calc(-50% + ${state.imageY}%)) scale(${state.imageScale / 100})`,
+                        transformOrigin: "center",
+                      }}
+                      draggable={false}
+                    />
+                  </div>
                 )}
 
-                {/* User logo overlay */}
+                {/* User logo overlay — preserves aspect ratio (height auto) */}
                 {state.userLogo && (
                   <img
                     src={state.userLogo}
                     alt="Logo utilisateur"
                     className={cn(
-                      "pointer-events-none absolute select-none object-contain",
+                      "pointer-events-none absolute z-30 select-none object-contain",
                       state.logoCorner === "tl" && "left-3 top-3",
                       state.logoCorner === "tr" && "right-3 top-3",
                       state.logoCorner === "bl" && "left-3 bottom-3",
@@ -429,7 +431,8 @@ export default function StudioCustomizePage() {
                     )}
                     style={{
                       width: state.logoSize,
-                      height: state.logoSize,
+                      height: "auto",
+                      maxHeight: state.logoSize,
                       opacity: state.logoOpacity / 100,
                     }}
                     draggable={false}
@@ -440,7 +443,7 @@ export default function StudioCustomizePage() {
                 {effOverlay !== "none" && (
                   <div
                     className={cn(
-                      "pointer-events-none absolute inset-0",
+                      "pointer-events-none absolute inset-0 z-20",
                       effOverlay === "grain"     && "mt-noise opacity-40",
                       effOverlay === "scan"      && "mt-scanlines opacity-30",
                       effOverlay === "leak"      && "mt-light-leak",
@@ -475,7 +478,7 @@ export default function StudioCustomizePage() {
                 {/* Custom text layer (variant overrides align/justify/padding/title size) */}
                 <div
                   className={cn(
-                    "pointer-events-none absolute inset-0 flex flex-col",
+                    "pointer-events-none absolute inset-0 z-40 flex flex-col",
                     effJustify === "start"  && "justify-start",
                     effJustify === "center" && "justify-center",
                     effJustify === "end"    && "justify-end",
