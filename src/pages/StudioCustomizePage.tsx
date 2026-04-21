@@ -823,24 +823,27 @@ export default function StudioCustomizePage() {
                         </button>
                       ))}
                     </div>
+                    <p className="rounded-md border border-gold/20 bg-gold/5 px-2 py-1.5 text-[10px] text-gold/80">
+                      💡 Astuce : glissez directement la photo dans l'aperçu pour la déplacer.
+                    </p>
                     <Slider label="Zoom" value={state.imageScale} min={50} max={300} onChange={(v) => set({ imageScale: v })} unit="%" />
+                    <Slider label="Rotation" value={state.imageRotate} min={-180} max={180} onChange={(v) => set({ imageRotate: v })} unit="°" />
                     <Slider label="Position X" value={state.imageX} min={-100} max={100} onChange={(v) => set({ imageX: v })} unit="%" />
                     <Slider label="Position Y" value={state.imageY} min={-100} max={100} onChange={(v) => set({ imageY: v })} unit="%" />
                     <Slider label="Opacité" value={state.imageOpacity} min={0} max={100} onChange={(v) => set({ imageOpacity: v })} unit="%" />
-                    <Field label="Fusion">
-                      <select
+
+                    <Field label="Mode de fusion">
+                      <BlendPresetGrid
+                        src={state.userImage}
                         value={state.imageBlend}
-                        onChange={(e) => set({ imageBlend: e.target.value as State["imageBlend"] })}
-                        className="w-full rounded-lg border border-border bg-card px-2 py-2 text-xs text-foreground outline-none focus:border-gold/50"
-                      >
-                        {(["normal","multiply","screen","overlay","soft-light","luminosity"] as const).map((b) => (
-                          <option key={b} value={b}>{b}</option>
-                        ))}
-                      </select>
+                        options={["normal","multiply","screen","overlay","soft-light","luminosity","color","darken","lighten","difference"]}
+                        onChange={(b) => set({ imageBlend: b as State["imageBlend"] })}
+                      />
                     </Field>
+
                     <button
                       type="button"
-                      onClick={() => set({ userImage: null, imageScale: 100, imageX: 0, imageY: 0, imageOpacity: 100, imageBlend: "normal" })}
+                      onClick={() => set({ userImage: null, imageScale: 100, imageX: 0, imageY: 0, imageRotate: 0, imageOpacity: 100, imageBlend: "normal" })}
                       className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-1.5 text-[11px] text-destructive transition-luxe hover:bg-destructive/10"
                     >
                       <Trash2 className="h-3 w-3" /> Retirer la photo
