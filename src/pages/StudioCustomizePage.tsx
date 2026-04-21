@@ -511,6 +511,22 @@ export default function StudioCustomizePage() {
                   />
                 )}
 
+                {/* Legibility scrim — softens busy variants so text always reads */}
+                {(state.showTitle || state.showSubtitle || state.showBadge) && (
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 z-[35]"
+                    style={{
+                      background:
+                        effJustify === "start"
+                          ? "linear-gradient(180deg, hsl(0 0% 0% / 0.45), transparent 50%)"
+                          : effJustify === "end"
+                          ? "linear-gradient(0deg, hsl(0 0% 0% / 0.55), transparent 55%)"
+                          : "radial-gradient(70% 55% at 50% 50%, hsl(0 0% 0% / 0.45), transparent 75%)",
+                    }}
+                  />
+                )}
+
                 {/* Custom text layer (variant overrides align/justify/padding/title size + user X/Y offset) */}
                 <div
                   className={cn(
@@ -548,20 +564,24 @@ export default function StudioCustomizePage() {
                         effAlign === "center" && "mx-auto",
                         effAlign === "right" && "ml-auto",
                       )}
-                      style={{ background: activeAccent.color, color: "hsl(var(--ink))" }}
+                      style={{
+                        background: state.badgeColor || activeAccent.color,
+                        color: state.badgeTextColor || "hsl(var(--ink))",
+                      }}
                     >
                       {state.badge}
                     </span>
                   )}
                   {state.showTitle && (
                     <h2
-                      className="leading-tight text-white drop-shadow-md"
+                      className="leading-tight drop-shadow-md"
                       style={{
                         fontFamily: activeFont.display,
                         fontSize: effTitleSize,
                         fontWeight: state.titleWeight,
                         fontStyle: state.titleItalic ? "italic" : "normal",
                         textTransform: effUppercase ? "uppercase" : "none",
+                        color: state.titleColor || "#FFFFFF",
                       }}
                     >
                       {state.title || " "}
@@ -569,8 +589,12 @@ export default function StudioCustomizePage() {
                   )}
                   {state.showSubtitle && state.subtitle && (
                     <p
-                      className="mt-1 text-[11px] uppercase tracking-[0.35em]"
-                      style={{ color: activeAccent.color }}
+                      className="mt-1 uppercase"
+                      style={{
+                        color: state.subtitleColor || activeAccent.color,
+                        fontSize: state.subtitleSize,
+                        letterSpacing: `${state.subtitleTracking / 100}em`,
+                      }}
                     >
                       {state.subtitle}
                     </p>
