@@ -796,6 +796,19 @@ export default function StudioCustomizePage() {
                     </div>
                   </div>
                 </div>
+
+                <div className="mt-2 border-t border-border/60 pt-3">
+                  <p className="mb-2 text-[10px] uppercase tracking-widest text-gold/80">Position du texte</p>
+                  <Slider label="Décalage X" value={state.textX} min={-50} max={50} onChange={(v) => set({ textX: v })} unit="%" />
+                  <Slider label="Décalage Y" value={state.textY} min={-50} max={50} onChange={(v) => set({ textY: v })} unit="%" />
+                  <button
+                    type="button"
+                    onClick={() => set({ textX: 0, textY: 0 })}
+                    className="mt-1 inline-flex w-full items-center justify-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-[10px] text-foreground/70 transition-luxe hover:border-gold/40 hover:text-gold"
+                  >
+                    <RotateCcw className="h-2.5 w-2.5" /> Recentrer
+                  </button>
+                </div>
               </Section>
             </>
           )}
