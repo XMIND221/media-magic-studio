@@ -1742,7 +1742,56 @@ interface BeforeAfterCrop {
   opacity?: number;   // %
 }
 
-function BeforeAfterTile({
+function ColorField({ label, value, fallback, onChange }: {
+  label: string; value: string; fallback: string; onChange: (v: string) => void;
+}) {
+  const effective = value || fallback;
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-[9px] uppercase tracking-widest text-muted-foreground">{label}</span>
+      <div className="flex items-center gap-1.5 rounded-md border border-border bg-card px-1.5 py-1">
+        <input
+          type="color"
+          value={toHex(effective)}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-6 w-6 cursor-pointer rounded border-0 bg-transparent p-0"
+          aria-label={label}
+        />
+        <span className="truncate text-[10px] text-foreground/70">{value ? value : "auto"}</span>
+        {value && (
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="ml-auto text-[9px] text-muted-foreground hover:text-gold"
+            title="Réinitialiser"
+          >×</button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function toHex(input: string): string {
+  if (!input) return "#ffffff";
+  if (input.startsWith("#") && (input.length === 7 || input.length === 4)) {
+    if (input.length === 4) return "#" + input.slice(1).split("").map(c => c + c).join("");
+    return input.toLowerCase();
+  }
+  try {
+    const ctx = document.createElement("canvas").getContext("2d");
+    if (!ctx) return "#ffffff";
+    ctx.fillStyle = "#fff";
+    ctx.fillStyle = input;
+    const v = ctx.fillStyle as string;
+    if (v.startsWith("#")) return v;
+    const m = v.match(/\d+/g);
+    if (m && m.length >= 3) {
+      return "#" + [0,1,2].map(i => Number(m[i]).toString(16).padStart(2, "0")).join("");
+    }
+  } catch { /* ignore */ }
+  return "#ffffff";
+}
+
   src, blend, label, kind = "photo", crop,
 }: { src: string | null; blend: string; label: string; kind?: "photo" | "logo"; crop?: BeforeAfterCrop }) {
   const scale = (crop?.scale ?? 100) / 100;
