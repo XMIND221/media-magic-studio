@@ -486,7 +486,7 @@ export default function StudioCustomizePage() {
                   />
                 )}
 
-                {/* Custom text layer (variant overrides align/justify/padding/title size) */}
+                {/* Custom text layer (variant overrides align/justify/padding/title size + user X/Y offset) */}
                 <div
                   className={cn(
                     "pointer-events-none absolute inset-0 z-40 flex flex-col",
@@ -494,7 +494,11 @@ export default function StudioCustomizePage() {
                     effJustify === "center" && "justify-center",
                     effJustify === "end"    && "justify-end",
                   )}
-                  style={{ textAlign: effAlign, padding: effPadding }}
+                  style={{
+                    textAlign: effAlign,
+                    padding: effPadding,
+                    transform: `translate(${state.textX}%, ${state.textY}%)`,
+                  }}
                 >
                   {state.showLogo && (
                     <div
