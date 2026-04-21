@@ -307,7 +307,20 @@ export default function StudioCustomizePage() {
   const isMedia = product.category === "media";
   const set = (patch: Partial<State>) => dispatch({ type: "set", patch });
 
-  const filterCss = `brightness(${state.brightness}%) contrast(${state.contrast}%) saturate(${state.saturation}%) blur(${state.blur}px)`;
+  const profile = VARIANT_PROFILES[state.variantSeed as VariantId] ?? VARIANT_PROFILES.v1;
+  // Effective values combining user state + variant profile
+  const effBrightness = Math.round(state.brightness * profile.brightnessMul);
+  const effContrast   = Math.round(state.contrast   * profile.contrastMul);
+  const effSaturation = Math.round(state.saturation * profile.saturationMul);
+  const effOverlay    = profile.overlayHint && state.overlay === "none" ? profile.overlayHint : state.overlay;
+  const effAlign      = profile.align;
+  const effJustify    = profile.justify;
+  const effPadding    = profile.padding;
+  const effTitleSize  = Math.round(state.titleSize * profile.titleSizeMul);
+  const effUppercase  = profile.uppercase ?? state.titleUppercase;
+  const filterCss     = `brightness(${effBrightness}%) contrast(${effContrast}%) saturate(${effSaturation}%) blur(${state.blur}px) hue-rotate(${profile.tintHueShift}deg)`;
+  // Variant seed for thumbnail engines: ONLY variant — never font/accent (font shouldn't change colors)
+  const thumbSeed = `${state.variantSeed}-${state.variantSeed.repeat(3)}-${state.palette}`;
 
   return (
     <div className="min-h-screen bg-background">
