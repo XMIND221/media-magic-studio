@@ -702,11 +702,70 @@ export default function StudioCustomizePage() {
             </div>
           </div>
 
-          {/* Quick actions row */}
+          {/* Quick actions row + Compare mode */}
           <div className="mt-3 grid grid-cols-3 gap-2">
             <QuickBtn icon={<Copy className="h-3.5 w-3.5" />} label="Dupliquer" />
             <QuickBtn icon={<Share2 className="h-3.5 w-3.5" />} label="Partager" />
-            <QuickBtn icon={<Wand2 className="h-3.5 w-3.5" />} label="IA Auto" />
+            <button
+              type="button"
+              onClick={handleAutoLook}
+              disabled={!state.userImage && !state.userLogo}
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-gold/40 bg-gold/10 px-3 py-2 text-[11px] text-gold transition-luxe hover:bg-gold/20 disabled:opacity-50"
+            >
+              <Zap className="h-3.5 w-3.5" /> Auto-look
+            </button>
+          </div>
+
+          {/* Compare mode toggle */}
+          <div className="mt-3 rounded-2xl border border-border/60 bg-card/40 p-2">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-[10px] uppercase tracking-[0.35em] text-gold/80">Comparer</p>
+              <div className="flex rounded-lg border border-border bg-background/50 p-0.5">
+                {([
+                  { id: "off",  label: "Off",       icon: null },
+                  { id: "ba",   label: "Avant/Après", icon: <SplitSquareHorizontal className="h-3 w-3" /> },
+                  { id: "grid", label: "Grille",     icon: <Grid3x3 className="h-3 w-3" /> },
+                ] as const).map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => set({ compareMode: m.id })}
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium transition-luxe",
+                      state.compareMode === m.id
+                        ? "bg-gradient-gold text-[hsl(var(--ink))]"
+                        : "text-foreground/70 hover:text-foreground"
+                    )}
+                  >
+                    {m.icon}{m.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {state.compareMode !== "off" && (
+              <CompareGrid
+                mode={state.compareMode}
+                product={product}
+                isMedia={isMedia}
+                state={state}
+                photoFavs={photoFavs.favs}
+                logoFavs={logoFavs.favs}
+                activePalette={activePalette}
+                activeAccent={activeAccent}
+                activeFont={activeFont}
+                activeFormat={activeFormat}
+                profile={profile}
+                effOverlay={effOverlay}
+                effAlign={effAlign}
+                effJustify={effJustify}
+                effPadding={effPadding}
+                effTitleSize={effTitleSize}
+                effUppercase={effUppercase}
+                filterCss={filterCss}
+                thumbSeed={thumbSeed}
+              />
+            )}
           </div>
         </section>
 
