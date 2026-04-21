@@ -132,8 +132,48 @@ const OVERLAYS = [
   { id: "duotone",    label: "Duotone" },
 ];
 
-// 10 variantes (A → J) — différences plus marquées via offset de seed
-const VARIANTS = ["v1","v2","v3","v4","v5","v6","v7","v8","v9","v10"];
+// 10 variantes — différences MARQUÉES (layout, contraste, échelle, overlay, blend)
+// Chaque variante applique un profil distinct par-dessus l'état utilisateur.
+const VARIANTS = ["v1","v2","v3","v4","v5","v6","v7","v8","v9","v10"] as const;
+type VariantId = typeof VARIANTS[number];
+
+interface VariantProfile {
+  label: string;
+  // visual transforms applied to the template visual layer
+  rotate: number;          // deg
+  scale: number;           // 0.85..1.25
+  translateX: number;      // %
+  translateY: number;      // %
+  // tone overrides (multipliers applied on top of user values)
+  brightnessMul: number;
+  contrastMul: number;
+  saturationMul: number;
+  // text layout overrides
+  align: "left" | "center" | "right";
+  justify: "start" | "center" | "end";
+  padding: number;         // px
+  titleSizeMul: number;    // multiplier
+  uppercase: boolean | null;   // null = keep user
+  // visual flair
+  overlayHint: string | null;  // overrides overlay if set
+  blendOverlay: "normal" | "multiply" | "screen" | "overlay" | "soft-light" | "color-dodge" | "difference";
+  // background tint
+  tintHueShift: number;    // deg (rotates background hue via filter)
+  flip: boolean;
+}
+
+const VARIANT_PROFILES: Record<VariantId, VariantProfile> = {
+  v1:  { label: "Classique",   rotate: 0,    scale: 1.00, translateX: 0,  translateY: 0,  brightnessMul: 1.00, contrastMul: 1.00, saturationMul: 1.00, align: "left",   justify: "end",    padding: 20, titleSizeMul: 1.00, uppercase: null,  overlayHint: null,        blendOverlay: "normal",      tintHueShift: 0,    flip: false },
+  v2:  { label: "Centré airy", rotate: 0,    scale: 0.92, translateX: 0,  translateY: 0,  brightnessMul: 1.10, contrastMul: 0.92, saturationMul: 0.85, align: "center", justify: "center", padding: 32, titleSizeMul: 1.15, uppercase: false, overlayHint: "vignette",  blendOverlay: "soft-light",  tintHueShift: 0,    flip: false },
+  v3:  { label: "Editorial",   rotate: 0,    scale: 1.00, translateX: 0,  translateY: 0,  brightnessMul: 0.85, contrastMul: 1.25, saturationMul: 0.65, align: "left",   justify: "start",  padding: 24, titleSizeMul: 0.95, uppercase: true,  overlayHint: "grain",     blendOverlay: "normal",      tintHueShift: 0,    flip: false },
+  v4:  { label: "Cinéma",      rotate: 0,    scale: 1.10, translateX: 0,  translateY: 5,  brightnessMul: 0.75, contrastMul: 1.35, saturationMul: 1.10, align: "center", justify: "end",    padding: 28, titleSizeMul: 1.30, uppercase: true,  overlayHint: "leak",      blendOverlay: "screen",      tintHueShift: -10,  flip: false },
+  v5:  { label: "Néon Pop",    rotate: 0,    scale: 1.00, translateX: 0,  translateY: 0,  brightnessMul: 1.15, contrastMul: 1.20, saturationMul: 1.80, align: "center", justify: "center", padding: 18, titleSizeMul: 1.10, uppercase: true,  overlayHint: "neon",      blendOverlay: "color-dodge", tintHueShift: 35,   flip: false },
+  v6:  { label: "Asymétrique", rotate: -3,   scale: 1.05, translateX: -4, translateY: -2, brightnessMul: 1.00, contrastMul: 1.10, saturationMul: 1.00, align: "right",  justify: "start",  padding: 22, titleSizeMul: 1.05, uppercase: false, overlayHint: "diagonal",  blendOverlay: "overlay",     tintHueShift: 0,    flip: false },
+  v7:  { label: "Mono noir",   rotate: 0,    scale: 1.00, translateX: 0,  translateY: 0,  brightnessMul: 0.80, contrastMul: 1.40, saturationMul: 0.00, align: "left",   justify: "end",    padding: 20, titleSizeMul: 1.00, uppercase: true,  overlayHint: "grain",     blendOverlay: "multiply",    tintHueShift: 0,    flip: false },
+  v8:  { label: "Glow doré",   rotate: 0,    scale: 1.00, translateX: 0,  translateY: 0,  brightnessMul: 1.05, contrastMul: 1.05, saturationMul: 1.20, align: "center", justify: "center", padding: 24, titleSizeMul: 1.20, uppercase: false, overlayHint: "shimmer",   blendOverlay: "screen",      tintHueShift: 15,   flip: false },
+  v9:  { label: "Halftone",    rotate: 0,    scale: 1.00, translateX: 0,  translateY: 0,  brightnessMul: 0.95, contrastMul: 1.50, saturationMul: 0.40, align: "left",   justify: "start",  padding: 16, titleSizeMul: 0.90, uppercase: true,  overlayHint: "halftone",  blendOverlay: "multiply",    tintHueShift: 0,    flip: false },
+  v10: { label: "Mirroir",     rotate: 0,    scale: 1.08, translateX: 0,  translateY: 0,  brightnessMul: 1.00, contrastMul: 1.15, saturationMul: 1.10, align: "right",  justify: "end",    padding: 26, titleSizeMul: 1.10, uppercase: false, overlayHint: "spotlight", blendOverlay: "overlay",     tintHueShift: 0,    flip: true  },
+};
 
 interface State {
   title: string;
