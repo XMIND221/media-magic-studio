@@ -832,11 +832,11 @@ export default function StudioCustomizePage() {
                     <Slider label="Position Y" value={state.imageY} min={-100} max={100} onChange={(v) => set({ imageY: v })} unit="%" />
                     <Slider label="Opacité" value={state.imageOpacity} min={0} max={100} onChange={(v) => set({ imageOpacity: v })} unit="%" />
 
-                    <Field label="Mode de fusion">
-                      <BlendPresetGrid
+                    <Field label="Style de fusion (look)">
+                      <BlendLookGrid
                         src={state.userImage}
                         value={state.imageBlend}
-                        options={["normal","multiply","screen","overlay","soft-light","luminosity","color","darken","lighten","difference"]}
+                        kind="photo"
                         onChange={(b) => set({ imageBlend: b as State["imageBlend"] })}
                       />
                     </Field>
@@ -887,20 +887,19 @@ export default function StudioCustomizePage() {
                         ))}
                       </div>
                     </Field>
-                    <Field label="Mode de fusion logo">
-                      <BlendPresetGrid
+                    <Field label="Style de fusion logo">
+                      <BlendLookGrid
                         src={state.userLogo}
                         value={state.logoBlend}
-                        options={["normal","multiply","screen","overlay","soft-light","luminosity","color-dodge","difference"]}
+                        kind="logo"
                         onChange={(b) => set({ logoBlend: b as State["logoBlend"] })}
-                        compact
                       />
                     </Field>
                     <div className="rounded-lg border border-border/60 bg-card/40 p-2">
                       <p className="mb-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">Avant / Après</p>
                       <div className="grid grid-cols-2 gap-2">
-                        <BeforeAfterTile src={state.userLogo} blend="normal" label="Avant" />
-                        <BeforeAfterTile src={state.userLogo} blend={state.logoBlend} label="Après" />
+                        <BeforeAfterTile src={state.userLogo} blend="normal" label="Avant" kind="logo" />
+                        <BeforeAfterTile src={state.userLogo} blend={state.logoBlend} label="Après" kind="logo" />
                       </div>
                     </div>
                     <button
@@ -1233,43 +1232,116 @@ function DraggableImageLayer({
   );
 }
 
-/* ----------- Blend mode preset grid ----------- */
+/* ----------- Curated blend "looks" — chaque preset = mode + ambiance soignée ----------- */
 
-function BlendPresetGrid({
-  src, value, options, onChange, compact,
+type BlendMode = React.CSSProperties["mixBlendMode"];
+
+interface BlendLook {
+  id: string;             // === blend mode CSS
+  label: string;          // french friendly name
+  mode: BlendMode;
+  // backdrop CSS gradient used in the small preview tile
+  backdrop: string;
+}
+
+// Looks adaptés aux PHOTOS de fond (riches, doux, cinéma)
+const PHOTO_LOOKS: BlendLook[] = [
+  { id: "normal",     label: "Original",   mode: "normal",
+    backdrop: "linear-gradient(135deg,#1a1410,#0a0805)" },
+  { id: "soft-light", label: "Soyeux",     mode: "soft-light",
+    backdrop: "linear-gradient(135deg,hsl(43 80% 55%),hsl(38 65% 38%))" },
+  { id: "overlay",    label: "Cinéma",     mode: "overlay",
+    backdrop: "radial-gradient(60% 60% at 30% 30%,hsl(43 80% 55% / .9),transparent 60%),linear-gradient(180deg,#1a1208,#07050a)" },
+  { id: "multiply",   label: "Velours",    mode: "multiply",
+    backdrop: "linear-gradient(135deg,hsl(38 65% 38%),hsl(30 30% 12%))" },
+  { id: "screen",     label: "Lumineux",   mode: "screen",
+    backdrop: "linear-gradient(135deg,#0a0612,#1a0b2e)" },
+  { id: "luminosity", label: "Doré mono",  mode: "luminosity",
+    backdrop: "linear-gradient(135deg,hsl(43 80% 55%),hsl(38 65% 38%))" },
+  { id: "color",      label: "Teinte or",  mode: "color",
+    backdrop: "linear-gradient(135deg,hsl(43 80% 55%),hsl(35 70% 30%))" },
+  { id: "darken",     label: "Profond",    mode: "darken",
+    backdrop: "linear-gradient(135deg,hsl(40 30% 90%),hsl(35 20% 70%))" },
+];
+
+// Looks adaptés aux LOGOS (PNG transparent ou solide)
+const LOGO_LOOKS: BlendLook[] = [
+  { id: "normal",      label: "Original",  mode: "normal",
+    backdrop: "linear-gradient(135deg,#1a1410,#0a0805)" },
+  { id: "screen",      label: "Lumière",   mode: "screen",
+    backdrop: "linear-gradient(135deg,#0a0612,#1a0b2e)" },
+  { id: "overlay",     label: "Embossé",   mode: "overlay",
+    backdrop: "linear-gradient(135deg,hsl(43 80% 55%),hsl(38 65% 38%))" },
+  { id: "soft-light",  label: "Délicat",   mode: "soft-light",
+    backdrop: "linear-gradient(135deg,hsl(43 80% 55%),hsl(38 65% 38%))" },
+  { id: "multiply",    label: "Encre",     mode: "multiply",
+    backdrop: "linear-gradient(135deg,hsl(40 30% 92%),hsl(35 20% 78%))" },
+  { id: "luminosity",  label: "Mono or",   mode: "luminosity",
+    backdrop: "linear-gradient(135deg,hsl(43 80% 55%),hsl(38 65% 38%))" },
+  { id: "color-dodge", label: "Néon",      mode: "color-dodge",
+    backdrop: "radial-gradient(circle at 30% 30%,hsl(310 100% 60% / .6),transparent 60%),radial-gradient(circle at 70% 70%,hsl(190 100% 55% / .6),transparent 60%),#0a0612" },
+  { id: "difference",  label: "Inverse",   mode: "difference",
+    backdrop: "linear-gradient(135deg,hsl(0 0% 95%),hsl(0 0% 70%))" },
+];
+
+function BlendLookGrid({
+  src, value, kind, onChange,
 }: {
   src: string | null;
   value: string;
-  options: string[];
+  kind: "photo" | "logo";
   onChange: (v: string) => void;
-  compact?: boolean;
 }) {
+  const looks = kind === "photo" ? PHOTO_LOOKS : LOGO_LOOKS;
   return (
-    <div className={cn("grid gap-1.5", compact ? "grid-cols-4" : "grid-cols-5")}>
-      {options.map((b) => {
-        const active = value === b;
+    <div className="grid grid-cols-4 gap-2">
+      {looks.map((l) => {
+        const active = value === l.id;
         return (
           <button
-            key={b}
+            key={l.id}
             type="button"
-            onClick={() => onChange(b)}
-            title={b}
+            onClick={() => onChange(l.id)}
+            title={l.label}
             className={cn(
-              "group flex flex-col items-stretch overflow-hidden rounded-md border text-[9px] transition-luxe",
-              active ? "border-gold ring-1 ring-gold/40" : "border-border hover:border-gold/40"
+              "group flex flex-col items-stretch overflow-hidden rounded-lg border transition-luxe",
+              active
+                ? "border-gold ring-1 ring-gold/50 shadow-glow"
+                : "border-border hover:border-gold/40"
             )}
           >
-            <div className="relative h-9 w-full bg-gradient-to-br from-[hsl(var(--gold))] to-[hsl(var(--surface-3))]">
-              {src && (
+            <div
+              className="relative aspect-square w-full"
+              style={{ background: l.backdrop }}
+            >
+              {src ? (
                 <img
                   src={src}
                   alt=""
-                  className="absolute inset-0 h-full w-full object-cover"
-                  style={{ mixBlendMode: b as React.CSSProperties["mixBlendMode"] }}
+                  className={cn(
+                    "absolute inset-0 h-full w-full select-none",
+                    kind === "logo" ? "object-contain p-2" : "object-cover"
+                  )}
+                  style={{ mixBlendMode: l.mode }}
+                  draggable={false}
                 />
+              ) : (
+                <div className="absolute inset-0 grid place-items-center text-[9px] text-white/50">—</div>
+              )}
+              {active && (
+                <span className="absolute right-1 top-1 grid h-4 w-4 place-items-center rounded-full bg-gold text-[9px] text-[hsl(var(--ink))]">
+                  <Check className="h-2.5 w-2.5" />
+                </span>
               )}
             </div>
-            <span className="truncate bg-card px-1 py-0.5 text-center text-foreground/80">{b}</span>
+            <span
+              className={cn(
+                "px-1.5 py-1 text-center text-[10px] font-medium tracking-wide",
+                active ? "bg-gold/10 text-gold" : "bg-card text-foreground/80"
+              )}
+            >
+              {l.label}
+            </span>
           </button>
         );
       })}
@@ -1277,20 +1349,33 @@ function BlendPresetGrid({
   );
 }
 
-function BeforeAfterTile({ src, blend, label }: { src: string | null; blend: string; label: string }) {
+function BeforeAfterTile({
+  src, blend, label, kind = "photo",
+}: { src: string | null; blend: string; label: string; kind?: "photo" | "logo" }) {
   return (
     <div className="overflow-hidden rounded-md border border-border/60">
-      <div className="relative aspect-square bg-gradient-to-br from-[hsl(var(--gold))] via-[hsl(var(--surface-2))] to-[hsl(var(--ink))]">
+      <div
+        className="relative aspect-square"
+        style={{
+          background:
+            "radial-gradient(60% 60% at 30% 30%,hsl(43 80% 55% / .9),transparent 60%),linear-gradient(180deg,#1a1208,#07050a)",
+        }}
+      >
         {src && (
           <img
             src={src}
             alt={label}
-            className="absolute inset-0 h-full w-full object-contain p-2"
-            style={{ mixBlendMode: blend as React.CSSProperties["mixBlendMode"] }}
+            className={cn(
+              "absolute inset-0 h-full w-full",
+              kind === "logo" ? "object-contain p-2" : "object-cover"
+            )}
+            style={{ mixBlendMode: blend as BlendMode }}
           />
         )}
       </div>
-      <p className="bg-card px-1.5 py-0.5 text-center text-[9px] uppercase tracking-widest text-muted-foreground">{label}</p>
+      <p className="bg-card px-1.5 py-0.5 text-center text-[9px] uppercase tracking-widest text-muted-foreground">
+        {label}
+      </p>
     </div>
   );
 }
